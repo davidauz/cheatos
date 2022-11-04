@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdbool.h>
 
+#include "definitions.h"
 #include "logic.h"
 
 // https://github.com/microsoft/Windows-classic-samples/tree/main/Samples
@@ -23,16 +24,6 @@ int WINAPI wWinMain
 	wc.hbrBackground = GetSysColorBrush(COLOR_3DFACE);
 	wc.lpfnWndProc   = WndProc;
 	wc.hCursor       = LoadCursor(0, IDC_ARROW);
-
-	if ( ! is_target_loaded() ) {
-		MessageBox
-		(	NULL //   [in, optional] HWND    hWnd
-		,	L"Target not loaded" //   [in, optional] LPCTSTR lpText
-		,	L"Error" // [in, optional] LPCTSTR lpCaption
-		,	MB_OK // [in]           UINT    uType
-		);
-		return 255;
-	}
 
 	RegisterClassW(&wc);
 	CreateWindowW
@@ -64,69 +55,36 @@ LRESULT CALLBACK WndProc
 ,	LPARAM lParam
 ) {
 	bool checked = true;
+	unsigned int curr_ID=0;
 
 	switch(msg) {
 		case WM_CREATE:
-			CreateWindowW
-			(	L"button"
-			,	L"Infinite ammo"
-			,	WS_VISIBLE | WS_CHILD | BS_CHECKBOX
-			,	20 // x
-			,	20 // y
-			,	185 // w
-			,	35 // h
-			,	hwnd
-			,	(HMENU) ID_INFINITE_AMMO
-			,	NULL
-			,	NULL
-			);
-			CheckDlgButton(hwnd, 1, BST_UNCHECKED);
-
-			CreateWindowW
-			(	L"button"
-			,	L"Infinite lives"
-			,	WS_VISIBLE | WS_CHILD | BS_CHECKBOX
-			,	20 // x
-			,	60 // y
-			,	185 // w
-			,	35 // h
-			,	hwnd
-			,	(HMENU) ID_INFINITE_LIVES
-			,	NULL
-			,	NULL
-			);
-			CheckDlgButton(hwnd, 1, BST_UNCHECKED);
+			int	curr_y=20
+			;
+			for(unsigned int i=0; i < sizeof(definitions)/sizeof(definitions[0]); i++) {
+				curr_ID=1+i;
+				CreateWindowW
+				(	L"button"
+				,	definitions[i].cheat_prompt
+				,	WS_VISIBLE | WS_CHILD | BS_CHECKBOX
+				,	20 // x
+				,	curr_y // y
+				,	185 // w
+				,	35 // h
+				,	hwnd
+				,	(HMENU)(UINT_PTR) curr_ID
+				,	NULL
+				,	NULL
+				);
+				CheckDlgButton(hwnd, curr_ID, BST_UNCHECKED);
+				curr_y +=40;
+			}
 		break;
 
 		case WM_COMMAND:
-			if (ID_INFINITE_LIVES == wParam) {
-				checked = IsDlgButtonChecked(hwnd, ID_INFINITE_LIVES);
-				if (checked) {
-					CheckDlgButton(hwnd, ID_INFINITE_LIVES, BST_UNCHECKED);
-					do_cheat("LIVES", 0);
-				} else {
-					CheckDlgButton(hwnd, ID_INFINITE_LIVES, BST_CHECKED);
-					do_cheat("LIVES", 1);
-				}
-			} else if (ID_INFINITE_AMMO == wParam ) {
-				checked = IsDlgButtonChecked(hwnd, ID_INFINITE_AMMO);
-				if (checked) {
-					CheckDlgButton(hwnd, ID_INFINITE_AMMO, BST_UNCHECKED);
-					do_cheat("AMMO", 0);
-				} else {
-					CheckDlgButton(hwnd, ID_INFINITE_AMMO, BST_CHECKED);
-					do_cheat("AMMO", 1);
-				}
-			} else {
-				TCHAR buff[100];
-				wsprintf(buff, L"`%d` ; `%d`", wParam, ID_INFINITE_LIVES);
-				MessageBox
-				(	NULL //   [in, optional] HWND    hWnd
-				,	buff //   [in, optional] LPCTSTR lpText
-				,	L"PEPPE" // [in, optional] LPCTSTR lpCaption
-				,	MB_OK // [in]           UINT    uType
-				);
-			}
+			checked = IsDlgButtonChecked(hwnd, wParam);
+			perform_action(wParam-1, !checked);
+			CheckDlgButton(hwnd, wParam, checked?BST_UNCHECKED:BST_CHECKED);
 		break;
 
 		case WM_DESTROY:
