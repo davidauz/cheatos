@@ -9,7 +9,7 @@
 
 #define UNINITIALIZED 0xFFFFFFFF
 #define TARGET_EXE L"GenerationZero_F.exe"
-//#define TARGET_EXE L"explorer.exe"
+//#define TARGET_EXE L"notepad.exe" // for tests
 
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;
@@ -103,6 +103,74 @@ void find_process_id(){
 	return;
 }
 
+int perform_dll_injection() {
+	char	dll_name[] = "cheatos.dll"
+	,	dll_path[MAX_PATH]={0}
+	;
+	SIZE_T  NumberOfBytesWritten;
+	BOOL	b_res;
+	if(0 == GetFullPathNameA
+	(	dll_name // [in]  LPCSTR lpFileName,
+	,	MAX_PATH // [in]  DWORD  nBufferLength,
+	,	dll_path // [out] LPSTR  lpBuffer,
+	,	NULL // [out] LPSTR  *lpFilePart
+	))
+		return show_error_return_false(L"Error in GetFullPathNameA");
+	int	n_path_size=1+strlen(dll_path);
+	HANDLE hProcess = OpenProcess
+	(	STANDARD_RIGHTS_REQUIRED | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE
+	,	FALSE
+	,	g_process_id
+	);
+	if(NULL==hProcess)
+		return show_error_return_false(L"Error in OpenProcess");
+	LPVOID p_dll_memory= VirtualAllocEx
+	(	hProcess // [in]           HANDLE hProcess,
+	,	NULL // [in, optional] LPVOID lpAddress,
+	,	n_path_size // [in]           SIZE_T dwSize,
+	,	MEM_COMMIT|MEM_RESERVE // [in]           DWORD  flAllocationType,
+	,	PAGE_READWRITE // [in]           DWORD  flProtect
+	);
+	b_res = WriteProcessMemory
+	(	hProcess //  [in]  HANDLE  hProcess
+	,	p_dll_memory // [in]  LPVOID  lpBaseAddress
+	,	dll_path // [in]  LPCVOID lpBuffer
+	,	n_path_size //[in]  SIZE_T  nSize
+	,	&NumberOfBytesWritten // [out] SIZE_T *lpNumberOfBytesWritten
+	);
+	if(0==b_res) {
+		CloseHandle(hProcess);
+		return show_error_return_false(L"Error writing memory");
+	}
+	if(NumberOfBytesWritten != n_path_size) {
+		CloseHandle(hProcess);
+		return show_error_return_false(L"Size mismatch reading memory");
+	}
+	HANDLE dll_thread_handle = CreateRemoteThread
+	(	 hProcess // [in]  HANDLE                 hProcess,
+	,	 NULL // [in]  LPSECURITY_ATTRIBUTES  lpThreadAttributes,
+	,	 (SIZE_T)NULL // [in]  SIZE_T                 dwStackSize,
+	,	 (LPTHREAD_START_ROUTINE)LoadLibraryA// [in]  LPTHREAD_START_ROUTINE lpStartAddress,
+	,	 p_dll_memory // [in]  LPVOID                 lpParameter,
+	,	 (DWORD)0 // [in]  DWORD                  dwCreationFlags,
+	,	 NULL // [out] LPDWORD                lpThreadId
+	);
+	WaitForSingleObject(dll_thread_handle, INFINITE);
+	CloseHandle(dll_thread_handle);
+	b_res=VirtualFreeEx
+	(	hProcess // [in] HANDLE hProcess,
+	,	dll_path // [in] LPVOID lpAddress,
+	,	n_path_size // [in] SIZE_T dwSize,
+	,	MEM_RELEASE // [in] DWORD  dwFreeType
+	);
+	if(0==b_res)
+		show_error_return_false(L"Error in VirtualFreeEx");
+
+	CloseHandle(hProcess);
+
+	return 0;
+}
+
 int perform_action(int cheat_id, bool on_off) {
 	struct cheat_definition *p_definition=&definitions[cheat_id];
 	char	*nop_code = p_definition->cheat_code
@@ -127,7 +195,10 @@ int perform_action(int cheat_id, bool on_off) {
 	if(0==g_process_id)
 		find_process_id();
 	if(0==g_process_id)
-		return show_error_return_false(L"Error in OpenProcess");
+		return show_error_return_false(L"Error in find_process_id");
+
+	if(DLL_INJECTION==cheat_id)
+		return perform_dll_injection();
 
 	lp_game_memory_address= g_baseAddress+p_definition->memory_address;
 
@@ -177,5 +248,6 @@ int perform_action(int cheat_id, bool on_off) {
 	CloseHandle(hProcess);
 	return 1;
 }
+
 
 

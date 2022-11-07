@@ -11,6 +11,19 @@
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
+/*
+void showError() {
+	TCHAR buff[100];
+	wsprintf(buff, L"`%d` ; `%d`", wParam, ID_INFINITE_LIVES);
+	MessageBox
+	(	NULL //   [in, optional] HWND    hWnd
+	,	buff //   [in, optional] LPCTSTR lpText
+	,	L"PEPPE" // [in, optional] LPCTSTR lpCaption
+	,	MB_OK // [in]           UINT    uType
+	);
+}
+*/
+
 int WINAPI wWinMain
 (	HINSTANCE hInstance
 ,	HINSTANCE hPrevInstance
@@ -33,7 +46,7 @@ int WINAPI wWinMain
 	,	150 // x position 
 	,	150 // y position 
 	,	230 // width
-	,	150 // height
+	,	250 // height
 	,	0 // Parent window
 	,	0 // No menu.
 	,	hInstance // hInstance from winmain
@@ -59,8 +72,9 @@ LRESULT CALLBACK WndProc
 
 	switch(msg) {
 		case WM_CREATE:
-			int	curr_y=20
+			int	curr_y=10
 			;
+// create controls according to definitions
 			for(unsigned int i=0; i < sizeof(definitions)/sizeof(definitions[0]); i++) {
 				curr_ID=1+i;
 				CreateWindowW
@@ -75,6 +89,15 @@ LRESULT CALLBACK WndProc
 				,	(HMENU)(UINT_PTR) curr_ID
 				,	NULL
 				,	NULL
+				);
+				SetWindowPos
+				(	hwnd	// [in]           HWND hWnd
+				,	0	// [in, optional] HWND hWndInsertAfter
+				,	150	// [in]           int  X
+				,	150	// [in]           int  Y
+				,	230	// [in]           int  cx
+				,	80+curr_y	// [in]           int  cy
+				,	0	// [in]           UINT uFlags
 				);
 				CheckDlgButton(hwnd, curr_ID, BST_UNCHECKED);
 				curr_y +=40;
