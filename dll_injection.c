@@ -3,23 +3,31 @@
 #include "definitions.h"
 #include "logic.h"
 
+DWORD g_dll_procid;
 
 DWORD WINAPI dll_thread(LPVOID param)
 {
-	MessageBoxA(NULL, "Thread started" , "Info" , MB_OK);
-	int cheat_status[3]={0};
+	g_dll_procid = GetCurrentProcessId();
+	int cheat_status[4]={0};
 	while(true){
-		if(GetAsyncKeyState(VK_NUMPAD1) & 0x8000){
+		if(GetAsyncKeyState(VK_NUMPAD0) ){
+			return 0;
+		}
+		if(GetAsyncKeyState(VK_NUMPAD1) ){
 			cheat_status[0]=!cheat_status[0];
 			perform_action(CHEAT_AMMO, cheat_status[0]);
 		}
-		if(GetAsyncKeyState(VK_NUMPAD2) & 0x8000){
+		if(GetAsyncKeyState(VK_NUMPAD2) ){
 			cheat_status[1]=!cheat_status[1];
 			perform_action(CHEAT_LIFE, cheat_status[1]);
 		}
-		if(GetAsyncKeyState(VK_NUMPAD3) & 0x8000){
+		if(GetAsyncKeyState(VK_NUMPAD3) ){
 			cheat_status[2]=!cheat_status[2];
 			perform_action(CHEAT_NO_RECHARGE, cheat_status[2]);
+		}
+		if(GetAsyncKeyState(VK_NUMPAD4) ){
+			cheat_status[3]=!cheat_status[3];
+			perform_action(INFINITE_STAMINA, cheat_status[3]);
 		}
 		Sleep(100);
 	}

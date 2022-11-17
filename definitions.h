@@ -5,7 +5,7 @@ enum cheats
 {	CHEAT_AMMO=0
 ,	CHEAT_LIFE
 ,	CHEAT_NO_RECHARGE
-,	DLL_INJECTION
+,	INFINITE_STAMINA
 };
 
 static struct cheat_definition {
@@ -36,12 +36,12 @@ static struct cheat_definition {
 	,	0x6b70f8
 	,	6
 	}
-,	[DLL_INJECTION]=
-	{	L"Enable numpad"
-	,	"cheatos.dll"
-	,	""
-	,	0x0
-	,	0
+,	[INFINITE_STAMINA]=
+	{	L"Infinite stamina (numpad 4)"
+	,	"\x74\x4d" // je      GenerationZero_F+0x5b777f
+	,	"\x90\x90"
+	,	0x5b7730
+	,	2
 	}
 };
 #endif

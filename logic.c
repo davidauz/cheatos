@@ -68,7 +68,7 @@ BYTE * find_process_base_address(DWORD processID_)
 
 
 
-void find_process_id(){
+int find_process_id(){
 	PROCESSENTRY32 pe32;
 	HANDLE hProcess;
 	HANDLE hProcessSnap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
@@ -76,14 +76,14 @@ void find_process_id(){
 	g_process_id = 0;
 	if( hProcessSnap == INVALID_HANDLE_VALUE ){
 		show_error_return_BS(L"Error in CreateToolhelp32Snapshot");
-		return;
+		return 0;
 	}
 
 	pe32.dwSize = sizeof( PROCESSENTRY32 );
 	if( !Process32First( hProcessSnap, &pe32 ) ) {
 		CloseHandle( hProcessSnap );
 		show_error_return_BS (L"Error in Process32First");
-		return;
+		return 0;
 	}
 
 	do{
@@ -97,10 +97,7 @@ void find_process_id(){
 		CloseHandle(hProcess);
 	} while( Process32Next( hProcessSnap, &pe32 ) );
 
-	if(0==g_process_id)
-		show_error_return_false (L"Could not find process");
-
-	return;
+	return g_process_id;
 }
 
 int perform_dll_injection() {
@@ -163,8 +160,8 @@ int perform_dll_injection() {
 	,	n_path_size // [in] SIZE_T dwSize,
 	,	MEM_RELEASE // [in] DWORD  dwFreeType
 	);
-	if(0==b_res)
-		show_error_return_false(L"Error in VirtualFreeEx");
+//	if(0==b_res)
+//		show_error_return_false(L"Error in VirtualFreeEx");
 
 	CloseHandle(hProcess);
 
@@ -187,8 +184,8 @@ int perform_action(int cheat_id, bool on_off) {
 	,	num_bytes_to_write
 	;
 
-	if(0==on_off) { // ZERO=REMOVE CHEAT
-		memory_contents=nop_code; // 1 INSTALL CHEAT
+	if(0==on_off) { // ZERO=REMOVE CHEAT.  1=INSTALL CHEAT
+		memory_contents=nop_code;
 		cheat_contents=original_code;
 	}
 
@@ -196,9 +193,6 @@ int perform_action(int cheat_id, bool on_off) {
 		find_process_id();
 	if(0==g_process_id)
 		return show_error_return_false(L"Error in find_process_id");
-
-	if(DLL_INJECTION==cheat_id)
-		return perform_dll_injection();
 
 	lp_game_memory_address= g_baseAddress+p_definition->memory_address;
 
@@ -249,5 +243,17 @@ int perform_action(int cheat_id, bool on_off) {
 	return 1;
 }
 
+int wait_for_process_and_inject()
+{
+	int n_process_id=0;
+	do {
+		n_process_id=find_process_id();
+		if(0!=n_process_id)
+			break;
+		Sleep(500);
+	} while(0==n_process_id);
+	g_process_id=n_process_id;
+	return perform_dll_injection();
+}
 
 
