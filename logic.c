@@ -14,6 +14,60 @@
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;
 
+void codecave(){
+//https://community.intel.com/t5/Intel-C-Compiler/Jumping-to-Labels-in-Inline-Assembly/td-p/965904?attachment-id=50160
+//https://gcc.gnu.org/onlinedocs/gcc-4.9.4/gnat_ugn_unw/A-Simple-Example-of-Inline-Assembler.html
+//https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html
+//https://stackoverflow.com/questions/21245245/c-uses-assemble-operand-type-mismatch-for-push
+//https://stackoverflow.com/questions/5397677/how-to-set-a-variable-in-gcc-with-intel-syntax-inline-assembly
+//https://stackoverflow.com/questions/67241134/why-does-this-inline-assembly-code-not-work-in-my-c-program
+//https://wiki.osdev.org/Inline_Assembly/Examples
+//https://www.codeproject.com/Articles/15971/Using-Inline-Assembly-in-C-C
+//https://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html#s3
+//http://gec.di.uminho.pt/Discip/IA32_gas/Linux-InlineAssembly.pdf
+
+__asm__(
+	"push		%rax;"
+	"subl		$16, %esp;" // simulated push xmm0
+	"movdqu		%xmm0,(%esp) ;" // MOVDQU	Move Unaligned Double Quadword
+	"movq		$3, %rax;" // 3 is the factor
+	"movq		%rax, %xmm0;"
+	"mulss		%xmm6, %xmm0;"
+	"movss		18(%rbx), %xmm7;" // original instruction: movss xmm7,[rbx+18]
+	"movdqu		(%esp), %xmm0;" // simulated pop xmm0
+	"add		$16, %esp;"
+	"pop		%rax;"
+	"ret;"
+	);
+}
+
+/*
+esempio:
+// is this enable or disable?  I didn't check the manual
+void set_caching_x86(void) {
+    long tmp;      // mov to/from cr requires a 64bit reg in 64bit mode
+    asm volatile(
+      "mov   %%cr0, %[tmp]\n\t"     // Note the double-% when we want a literal % in the asm output
+      "or    $0x40000000, %[tmp]\n\t"
+      "mov   %[tmp], %%cr0\n\t"
+      "wbinvd\n\t"
+      : [tmp] "=r" (tmp) // outputs
+      : // no inputs
+      : // no clobbers.  "memory" clobber isn't needed, this just affects performance, not contents
+      );
+}
+
+example:
+movl 4(%eax), %ebx
+takes value inside register %eax, adds 4 to it, and then
+fetches the contents of memory at that address, putting
+the result into register %ebx; sometimes called a "load"
+instruction as it loads data from memory into a register
+
+*/
+
+
+
 void display_show(TCHAR *msg){
 	MessageBox
 	(	NULL //   [in, optional] HWND    hWnd
@@ -243,9 +297,12 @@ int perform_action(int cheat_id, bool on_off) {
 	return 1;
 }
 
+
+
 int wait_for_process_and_inject()
 {
 	int n_process_id=0;
+
 	do {
 		n_process_id=find_process_id();
 		if(0!=n_process_id)
