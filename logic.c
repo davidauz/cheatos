@@ -285,25 +285,30 @@ struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
 	file_log("L %d: jump offset='0x%X'", __LINE__, jump_offset);
 	p_where_to_write=(BYTE *)(p_new_definition->cheat_code);
 	opcode=0xE8;
+	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
 	*p_where_to_write++=opcode;
 	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
 
 	opcode=jump_offset & 0xFF;
+	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
 	*p_where_to_write++=opcode;
 	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
 
-	jump_offset=jump_offset >> 16;
+	jump_offset=jump_offset >> 8;
 	opcode=jump_offset & 0xFF;
+	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
 	*p_where_to_write++=opcode;
 	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
 
-	jump_offset=jump_offset >> 16;
+	jump_offset=jump_offset >> 8;
 	opcode=jump_offset & 0xFF;
+	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
 	*p_where_to_write++=opcode;
 	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
 
-	jump_offset=jump_offset >> 16;
+	jump_offset=jump_offset >> 8;
 	opcode=jump_offset & 0xFF;
+	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
 	*p_where_to_write++=opcode;
 	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
 
@@ -463,3 +468,8 @@ int wait_for_process_and_inject()
 }
 
 
+int debug_tests(){
+	struct cheat_definition *p_definition=&definitions[MOVEMENT_SPEED];
+	do_codecave(p_definition);
+	return 0;
+}
