@@ -16,18 +16,25 @@ DWORD WINAPI dll_thread(LPVOID param)
 		if(GetAsyncKeyState(VK_NUMPAD1) ){
 			cheat_status[0]=!cheat_status[0];
 			perform_action(CHEAT_AMMO, cheat_status[0]);
+			cheat_status[2]=!cheat_status[2];
+			perform_action(CHEAT_NO_RECHARGE, cheat_status[2]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD2) ){
 			cheat_status[1]=!cheat_status[1];
 			perform_action(CHEAT_LIFE, cheat_status[1]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD3) ){
-			cheat_status[2]=!cheat_status[2];
-			perform_action(CHEAT_NO_RECHARGE, cheat_status[2]);
-		}
-		if(GetAsyncKeyState(VK_NUMPAD4) ){
 			cheat_status[3]=!cheat_status[3];
 			perform_action(INFINITE_STAMINA, cheat_status[3]);
+		}
+		if(GetAsyncKeyState(VK_NUMPAD4) ){ // VK_F10 VK_NUMPAD4
+			if(1==cheat_status[4])
+				return 0;
+			cheat_status[4]=!cheat_status[4];
+			perform_action(MOVEMENT_SPEED, cheat_status[4]);
+		}
+		if(GetAsyncKeyState(VK_NUMPAD0) ){
+			return 0;
 		}
 		Sleep(100);
 	}

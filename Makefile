@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -g -municode -mwindows
+CFLAGS = -g -mwindows
 headers = definitions.h logic.h
 cheatos_src = cheatos.c logic.c
 cheatos_obj=$(cheatos_src:%.c=%.o)
