@@ -13,7 +13,7 @@
 #define UNINITIALIZED 0xFFFFFFFF
 #define TARGET_EXE "GenerationZero_F.exe"
 //#define TARGET_EXE "notepad.exe" // for tests
-//#define TARGET_EXE "test_mem_analysis.exe" // for tests
+//#define TARGET_EXE "test_mem_analysis.exe" // for tests (again)
 
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;
@@ -54,53 +54,67 @@ int file_log(char* format, ...){
 
 
 
-void codecave(){
-//https://community.intel.com/t5/Intel-C-Compiler/Jumping-to-Labels-in-Inline-Assembly/td-p/965904?attachment-id=50160
-//https://gcc.gnu.org/onlinedocs/gcc-4.9.4/gnat_ugn_unw/A-Simple-Example-of-Inline-Assembler.html
-//https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html
-//https://stackoverflow.com/questions/21245245/c-uses-assemble-operand-type-mismatch-for-push
-//https://stackoverflow.com/questions/5397677/how-to-set-a-variable-in-gcc-with-intel-syntax-inline-assembly
-//https://stackoverflow.com/questions/67241134/why-does-this-inline-assembly-code-not-work-in-my-c-program
-//https://wiki.osdev.org/Inline_Assembly/Examples
-//https://www.codeproject.com/Articles/15971/Using-Inline-Assembly-in-C-C
-//https://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html#s3
-//http://gec.di.uminho.pt/Discip/IA32_gas/Linux-InlineAssembly.pdf
-
-// this is only for compiling the assembler.
-// it is never actually used
+void speed_multiplier(){
+// this is the original code in the game at the target address GenerationZero_F+0x5e0d9b :
+//
+// 00007ff7`62280d9b f3 0f 59 b0 ac 00 00 00 mulss   xmm6,dword ptr [rax+0ACh]
+// 00007ff7`62280da3 f3 0f 10 7b 18      movss   xmm7,dword ptr [rbx+18h] (5 bytes) <-- injection here
+// 00007ff7`62280da8 48 8b 8f a8 45 00 00  mov     rcx,qword ptr [rdi+45A8h] (7 bytes)
+// 00007ff7`62280daf e8fcfbc2ff      call    GenerationZero_F+0x2109b0 (00007ff7`61eb09b0)
+// 00007ff7`62280db4 0fb6f0          movzx   esi,al
+//
+// At this place there are 5+7=12 bytes that can be used to store the far call to the cheat code.
+// The original flow will be diverted here:
 __asm__( 
-	"push		%rax;"
-	"subl		$16, %esp;" // simulated push xmm0
-	"movdqu		%xmm0,(%esp) ;" // MOVDQU	Move Unaligned Double Quadword
-	"movq		$3, %rax;" // 3 is the factor
-	"movq		%rax, %xmm0;"
-	"mulss		%xmm6, %xmm0;"
-	"movss		0x18(%rbx), %xmm7;" // original instruction: movss xmm7,[rbx+18]
-	"movdqu		(%esp), %xmm0;" // simulated pop xmm0
-	"add		$16, %esp;"
-	"pop		%rax;"
+	"subq		$0x16, %rsp;" // simulated push xmm0
+	"movdqu		%xmm0,(%rsp) ;" // save xmm0 (Move Unaligned Double Quadword)
+	"movq		$3, %rax;" // 3 is the multiplying factor
+	"movq		%rax, %xmm0;" // move 3 from rax to xmm0
+	"movss		0x18(%rbx),%xmm7;" // original "movss xmm7,dword ptr [rbx+18h]"
+	"movdqu		(%rsp), %xmm0;" // simulated pop xmm0
+	"addq		$0x16, %rsp;" // restore stack
+	"movq		$1, %rax;" // at this point it is always 1
+	"mov		0x45a8(%rdi),%rcx;" // original "mov rcx,qword ptr [rdi+45A8h]"
+	"inc %rcx;" // diversi di questi sortiscono effetti curiosi
 	"ret;"
 	);
+// N.B. at the beginning of the speed_multiplier C function there is the function header:
+// 55		push   %rbp
+// 48 89 e5	mov    %rsp,%rbp
+// this means that the __asm__ code up here sits at speed_multiplier()+4
+
+// This is the code that will be written at the target address.
+// It is here for reference only, total 13 bytes	
+__asm__ (
+	"movabs $0x1122334455667788,%rax;" //  48 b8 88 77 66 55 44 33 22 11   (10 bytes)
+	"call *%rax;" // ff d0   (2 bytes)
+);
+
 /*
-once compiled the opcodes can be seen in gdb:
-(gdb) disass /r codecave
-Dump of assembler code for function codecave:
-   0x00000001400015d3 <+0>:     55      push   %rbp
-   0x00000001400015d4 <+1>:     48 89 e5        mov    %rsp,%rbp
-   0x00000001400015d7 <+4>:     50      push   %rax
-   0x00000001400015d8 <+5>:     83 ec 10        sub    $0x10,%esp
-   0x00000001400015db <+8>:     67 f3 0f 7f 04 24       movdqu %xmm0,(%esp)
-   0x00000001400015e1 <+14>:    48 c7 c0 03 00 00 00    mov    $0x3,%rax
-   0x00000001400015e8 <+21>:    66 48 0f 6e c0  movq   %rax,%xmm0
-   0x00000001400015ed <+26>:    f3 0f 59 c6     mulss  %xmm6,%xmm0
-   0x00000001400015f1 <+30>:    f3 0f 10 7b 18  movss  0x18(%rbx),%xmm7
-   0x00000001400015f6 <+35>:    67 f3 0f 6f 04 24       movdqu (%esp),%xmm0
-   0x00000001400015fc <+41>:    83 c4 10        add    $0x10,%esp
-   0x00000001400015ff <+44>:    58      pop    %rax
-   0x0000000140001600 <+45>:    c3      ret
-   0x0000000140001601 <+46>:    90      nop
-   0x0000000140001602 <+47>:    5d      pop    %rbp
-   0x0000000140001603 <+48>:    c3      ret
+here are the opcodes in speed_multiplier:
+(gdb) disass /r speed_multiplier
+Dump of assembler code for function speed_multiplier:
+   0x00000001400016c8 <+0>:     55      push   %rbp
+   0x00000001400016c9 <+1>:     48 89 e5        mov    %rsp,%rbp
+   0x00000001400016cc <+4>:     50      push   %rax
+   0x00000001400016cd <+5>:     83 ec 10        sub    $0x10,%esp
+   0x00000001400016d0 <+8>:     67 f3 0f 7f 04 24       movdqu %xmm0,(%esp)
+   0x00000001400016d6 <+14>:    48 c7 c0 03 00 00 00    mov    $0x3,%rax
+   0x00000001400016dd <+21>:    66 48 0f 6e c0  movq   %rax,%xmm0
+   0x00000001400016e2 <+26>:    f3 0f 59 c6     mulss  %xmm6,%xmm0
+   0x00000001400016e6 <+30>:    f3 0f 10 7b 18  movss  0x18(%rbx),%xmm7
+   0x00000001400016eb <+35>:    67 f3 0f 6f 04 24       movdqu (%esp),%xmm0
+   0x00000001400016f1 <+41>:    83 c4 10        add    $0x10,%esp
+   0x00000001400016f4 <+44>:    58      pop    %rax
+   0x00000001400016f5 <+45>:    f3 0f 59 b0 ac 00 00 00 mulss  0xac(%rax),%xmm6
+   0x00000001400016fd <+53>:    f3 0f 10 7b 18  movss  0x18(%rbx),%xmm7
+   0x0000000140001702 <+58>:    c3      ret
+   0x0000000140001703 <+59>:    48 a1 88 77 66 55 44 33 22 11   movabs 0x1122334455667788,%rax
+   0x000000014000170d <+69>:    ff d0   call   *%rax
+   0x000000014000170f <+71>:    90      nop
+   0x0000000140001710 <+72>:    90      nop
+   0x0000000140001711 <+73>:    5d      pop    %rbp
+   0x0000000140001712 <+74>:    c3      ret
 End of assembler dump.
 */
 }
@@ -241,97 +255,70 @@ int perform_dll_injection() {
 	return 0;
 }
 
+
+
 struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
-// this is needed for writing at the original code location
-	DWORD		jump_offset
-	;
 	BYTE		opcode
 	,		*p_where_to_write
 	;
-	unsigned long	codecave_relative_offset
-	;
-	char buf[255]={0};
-	;
+	unsigned	long long codecave_address;
+	void		*p_codecave_function = p_definition->code_cave;
 	struct cheat_definition *p_new_definition=malloc(sizeof(struct cheat_definition));
 
 	p_new_definition->cheat_prompt=malloc(1+strlen(p_definition->cheat_prompt));
 	strcpy(p_new_definition->cheat_prompt, p_definition->cheat_prompt);
 
-	p_new_definition->original_code=malloc(1+p_definition->cheat_num_bytes);
+	p_new_definition->original_code=malloc(p_definition->cheat_num_bytes);
  	memcpy(p_new_definition->original_code, p_definition->original_code, 1+p_definition->cheat_num_bytes);
 
-	p_new_definition->cheat_code=malloc(1+strlen(p_definition->cheat_code));
-	p_new_definition->cheat_code[0]='\xE8';
+	p_new_definition->cheat_code=malloc(p_definition->cheat_num_bytes);
+	// this will be written in a moment
 
-	p_new_definition->code_cave=malloc(1+strlen(p_definition->code_cave));
- 	memcpy(p_new_definition->code_cave, p_definition->code_cave, p_definition->code_cave_length);
-
- 	p_new_definition->code_cave_length = p_definition->code_cave_length;
  	p_new_definition->relative_offset = p_definition->relative_offset;
  	p_new_definition->cheat_num_bytes = p_definition->cheat_num_bytes;
 
 	file_log("L %d: base address='0x%.16llX'", __LINE__, g_baseAddress);
-	codecave_relative_offset=p_new_definition->code_cave-(void *)g_baseAddress;
-	file_log("L %d: codecave offset relative to base address='0x%X'", __LINE__, codecave_relative_offset); // 199fa190
-	file_log("L %d: cheat target relative to base address='0x%X'", __LINE__, p_new_definition->relative_offset);
-	if( codecave_relative_offset > p_new_definition->relative_offset ) {
-// forward relative jump
-		jump_offset= codecave_relative_offset - p_new_definition->relative_offset ;
-	} else {
-// backwards relative jump
-		jump_offset= p_new_definition->relative_offset - codecave_relative_offset ;
-		jump_offset=0xffffffff-jump_offset;
-	}
-	file_log("L %d: jump offset='0x%X'", __LINE__, jump_offset);
 	p_where_to_write=(BYTE *)(p_new_definition->cheat_code);
-	opcode=0xE8;
-	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
+	opcode=0x48;
+	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
 	*p_where_to_write++=opcode;
-	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
 
-	opcode=jump_offset & 0xFF;
-	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
+	opcode=0xb8;
+	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
 	*p_where_to_write++=opcode;
-	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
 
-	jump_offset=jump_offset >> 8;
-	opcode=jump_offset & 0xFF;
-	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
-	*p_where_to_write++=opcode;
-	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
+	codecave_address = (unsigned long long)p_codecave_function;
+	codecave_address+=4;// to compensate for function header
+	file_log("L %d: codecave code at `0x%.16llX`", __LINE__, codecave_address);
 
-	jump_offset=jump_offset >> 8;
-	opcode=jump_offset & 0xFF;
-	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
-	*p_where_to_write++=opcode;
-	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
+	for(int idx=0; idx<8; idx++) {
+		opcode=codecave_address & 0xFF;
+		file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
+		*p_where_to_write++=opcode;
+		codecave_address=codecave_address >> 8;
+	}
 
-	jump_offset=jump_offset >> 8;
-	opcode=jump_offset & 0xFF;
-	file_log("L %d: jump_offset=`0x%x`,opcode:'0x%x'", __LINE__ , jump_offset, opcode);
+	opcode=0xff;
+	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
 	*p_where_to_write++=opcode;
-	file_log("L %d: bytes to write: '0x%x 0x%x 0x%x 0x%x 0x%x '", __LINE__ , p_new_definition->cheat_code[0] , p_new_definition->cheat_code[1] , p_new_definition->cheat_code[2] , p_new_definition->cheat_code[3] , p_new_definition->cheat_code[4]);
+
+	opcode=0xd0;
+	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
+	*p_where_to_write++=opcode;
 
 	return p_new_definition;
-
-//	* /* (unsigned char *) */ p_where_to_write= 255; // jump_offset;
-//MessageBoxA(NULL,"A","INFO",MB_OK);
-	/*
-CALL CODECAVE
-00007ff7`672a0daf e8fcfbc2ff      call    GenerationZero_F+0x2109b0 (00007ff7`66ed09b0)
-CALLING ADDRESS 7ff7672a0daf=GenerationZero_F+0x5e0daf
-NEXT INSTRCTION 7ff7672a0db4=GenerationZero_F+0x5e0db4
-DESTION ADDRESS 7ff766ed09b0=GenerationZero_F+0x2109b0
-
-5e0db4-2109b0=3D0404
-672a0db4-66ed09b0=3D0404
-ffffffff-3D0404=FFC2FBFB
-*/
 }
+
 
 
 int perform_action(int cheat_id, bool on_off) {
 	struct cheat_definition *p_definition=&definitions[cheat_id];
+
+	if(0==g_process_id)
+		find_process_id();
+	if(0==g_process_id)
+		return file_log("Error in find_process_id")?FALSE:FALSE;
+file_log("L %d, base_address=`0x%.16llX`", __LINE__, g_baseAddress);
 
 	if( 0 != p_definition->code_cave)
 		p_definition=do_codecave(p_definition);
@@ -339,7 +326,7 @@ file_log("L %d: id=`%d`, on_off=`%d`", __LINE__, cheat_id, on_off);
 
 	unsigned char	*nop_code = p_definition->cheat_code
 	,	*original_code = p_definition->original_code
-	,	check_buffer[]="\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	,	check_buffer[50]={0}
 	;
 	BYTE	*lp_game_memory_address= 0x0
 	,	*memory_contents=original_code
@@ -358,13 +345,6 @@ file_log("L %d: id=`%d`, on_off=`%d`", __LINE__, cheat_id, on_off);
 		memory_contents=nop_code;
 		cheat_contents=original_code;
 	}
-
-	if(0==g_process_id)
-		find_process_id();
-	if(0==g_process_id)
-		return file_log("Error in find_process_id")?FALSE:FALSE;
-file_log("L %d", __LINE__);
-
 
 	lp_game_memory_address= g_baseAddress+p_definition->relative_offset;
 file_log("L %d", __LINE__);
@@ -398,33 +378,36 @@ file_log("L %d", __LINE__);
 		CloseHandle(hProcess);
 		return file_log("Size mismatch reading memory")?FALSE:FALSE;
 	}
-	for(int i=0; i<p_definition->cheat_num_bytes; i++)
-		if(memory_contents[i]!=check_buffer[i]) {
-file_log("L %d", __LINE__);
-			CloseHandle(hProcess);
-	file_log("L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
-	,	check_buffer[0]
-	,	check_buffer[1]
-	,	check_buffer[2]
-	,	check_buffer[3]
-	,	check_buffer[4]
-	);
-	file_log( "L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
-	,	memory_contents[0]
-	,	memory_contents[1]
-	,	memory_contents[2]
-	,	memory_contents[3]
-	,	memory_contents[4]
-	);
-			return file_log("Original memory content does not match")?FALSE:FALSE;
-		}
-file_log("L %d writing 0x%X 0x%X 0x%X 0x%X 0x%X ", __LINE__
+// check the original contents only if not a codecave (because the address is calculatd each time)
+//	if( 0 == p_definition->code_cave)
+//		for(int i=0; i<p_definition->cheat_num_bytes; i++)
+//			if(memory_contents[i]!=check_buffer[i]) {
+//file_log("L %d", __LINE__);
+//				CloseHandle(hProcess);
+//		file_log("L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
+//		,	check_buffer[0]
+//		,	check_buffer[1]
+//		,	check_buffer[2]
+//		,	check_buffer[3]
+//		,	check_buffer[4]
+//		);
+//		file_log( "L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
+//		,	memory_contents[0]
+//		,	memory_contents[1]
+//		,	memory_contents[2]
+//		,	memory_contents[3]
+//		,	memory_contents[4]
+//		);
+//				return file_log("L %d Original memory content don't match", __LINE__)?FALSE:FALSE;
+//		}
+file_log("L %d writing 0x%X 0x%X 0x%X 0x%X 0x%X  at `0x%.16llX`", __LINE__
 ,	cheat_contents[0]
 ,	cheat_contents[1]
 ,	cheat_contents[2]
 ,	cheat_contents[3]
 ,	cheat_contents[4]
-);
+,	lp_game_memory_address
+); // cheatos!perform_action+0x589 (+ o -)
 	b_res = WriteProcessMemory
 	(	hProcess //  [in]  HANDLE  hProcess
 	,	lp_game_memory_address // [in]  LPVOID  lpBaseAddress
@@ -453,6 +436,7 @@ file_log("L %d", __LINE__);
 
 int wait_for_process_and_inject()
 {
+
 	int n_process_id=0;
 	file_log("L %d: wait_for_process_and_inject", __LINE__);
 
@@ -473,3 +457,4 @@ int debug_tests(){
 	do_codecave(p_definition);
 	return 0;
 }
+

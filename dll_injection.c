@@ -3,11 +3,8 @@
 #include "definitions.h"
 #include "logic.h"
 
-DWORD g_dll_procid;
-
 DWORD WINAPI dll_thread(LPVOID param)
 {
-	g_dll_procid = GetCurrentProcessId();
 	int cheat_status[4]={0};
 	while(true){
 		if(GetAsyncKeyState(VK_NUMPAD0) ){
