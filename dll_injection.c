@@ -25,8 +25,6 @@ DWORD WINAPI dll_thread(LPVOID param)
 			perform_action(INFINITE_STAMINA, cheat_status[3]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD4) ){ // VK_F10 VK_NUMPAD4
-			if(1==cheat_status[4])
-				return 0;
 			cheat_status[4]=!cheat_status[4];
 			perform_action(MOVEMENT_SPEED, cheat_status[4]);
 		}
@@ -45,8 +43,8 @@ BOOL WINAPI DllMain
 )
 {
 	if( DLL_PROCESS_ATTACH == fdwReason ) { 
-		// Initialize once for each new process.
-		// Return FALSE to fail DLL load.
+// Initialize once for each new process.
+// Return FALSE to fail DLL load.
 			HANDLE h = CreateThread
 			(	(LPSECURITY_ATTRIBUTES)0		// [in, optional]  lpThreadAttributes
 			,	(SIZE_T)0				// [in] dwStackSize

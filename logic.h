@@ -8,5 +8,6 @@ int show_error_return_false( TCHAR* msg);
 int perform_action(int, bool);
 int wait_for_process_and_inject();
 int debug_tests();
+int file_log(char* format, ...);
 
 #endif

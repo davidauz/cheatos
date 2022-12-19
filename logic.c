@@ -44,7 +44,7 @@ int file_log(char* format, ...){
 	WriteFile
 	(	report_file_handle
 	,	buf// data to write
-	,	1+strlen(buf)	// number of bytes to write
+	,	strlen(buf)	// number of bytes to write
 	,	&dwBytesWritten	// number of bytes that were written
 	,	NULL      // no overlapped structure
 	);
@@ -54,6 +54,7 @@ int file_log(char* format, ...){
 
 
 
+// cheatos!speed_multiplier
 void speed_multiplier(){
 // this is the original code in the game at the target address GenerationZero_F+0x5e0d9b :
 //
@@ -66,16 +67,16 @@ void speed_multiplier(){
 // At this place there are 5+7=12 bytes that can be used to store the far call to the cheat code.
 // The original flow will be diverted here:
 __asm__( 
-	"subq		$0x16, %rsp;" // simulated push xmm0
-	"movdqu		%xmm0,(%rsp) ;" // save xmm0 (Move Unaligned Double Quadword)
-	"movq		$3, %rax;" // 3 is the multiplying factor
-	"movq		%rax, %xmm0;" // move 3 from rax to xmm0
+//	"subq		$0x16, %rsp;" // simulated push xmm0
+//	"movdqu		%xmm0,(%rsp) ;" // save xmm0 (Move Unaligned Double Quadword)
+//	"movq		$3, %rax;" // 3 is the multiplying factor
+//	"movq		%rax, %xmm0;" // move 3 from rax to xmm0
 	"movss		0x18(%rbx),%xmm7;" // original "movss xmm7,dword ptr [rbx+18h]"
-	"movdqu		(%rsp), %xmm0;" // simulated pop xmm0
-	"addq		$0x16, %rsp;" // restore stack
+//	"movdqu		(%rsp), %xmm0;" // simulated pop xmm0
+//	"addq		$0x16, %rsp;" // restore stack
 	"movq		$1, %rax;" // at this point it is always 1
 	"mov		0x45a8(%rdi),%rcx;" // original "mov rcx,qword ptr [rdi+45A8h]"
-	"inc %rcx;" // diversi di questi sortiscono effetti curiosi
+	"addq		$10,%rcx;"
 	"ret;"
 	);
 // N.B. at the beginning of the speed_multiplier C function there is the function header:
@@ -271,35 +272,31 @@ struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
 	p_new_definition->original_code=malloc(p_definition->cheat_num_bytes);
  	memcpy(p_new_definition->original_code, p_definition->original_code, 1+p_definition->cheat_num_bytes);
 
+
 	p_new_definition->cheat_code=malloc(p_definition->cheat_num_bytes);
 	// this will be written in a moment
 
+ 	p_new_definition->code_cave = p_definition->code_cave;
  	p_new_definition->relative_offset = p_definition->relative_offset;
  	p_new_definition->cheat_num_bytes = p_definition->cheat_num_bytes;
 
-	file_log("L %d: base address='0x%.16llX'", __LINE__, g_baseAddress);
 	p_where_to_write=(BYTE *)(p_new_definition->cheat_code);
 	opcode=0x48;
-	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
 	*p_where_to_write++=opcode;
 
 	opcode=0xb8;
-	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
 	*p_where_to_write++=opcode;
 
 	codecave_address = (unsigned long long)p_codecave_function;
 	codecave_address+=4;// to compensate for function header
-	file_log("L %d: codecave code at `0x%.16llX`", __LINE__, codecave_address);
 
 	for(int idx=0; idx<8; idx++) {
 		opcode=codecave_address & 0xFF;
-		file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
 		*p_where_to_write++=opcode;
 		codecave_address=codecave_address >> 8;
 	}
 
 	opcode=0xff;
-	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
 	*p_where_to_write++=opcode;
 
 	opcode=0xd0;
@@ -318,11 +315,9 @@ int perform_action(int cheat_id, bool on_off) {
 		find_process_id();
 	if(0==g_process_id)
 		return file_log("Error in find_process_id")?FALSE:FALSE;
-file_log("L %d, base_address=`0x%.16llX`", __LINE__, g_baseAddress);
 
 	if( 0 != p_definition->code_cave)
 		p_definition=do_codecave(p_definition);
-file_log("L %d: id=`%d`, on_off=`%d`", __LINE__, cheat_id, on_off);
 
 	unsigned char	*nop_code = p_definition->cheat_code
 	,	*original_code = p_definition->original_code
@@ -347,17 +342,14 @@ file_log("L %d: id=`%d`, on_off=`%d`", __LINE__, cheat_id, on_off);
 	}
 
 	lp_game_memory_address= g_baseAddress+p_definition->relative_offset;
-file_log("L %d", __LINE__);
 
 	hProcess = OpenProcess
 	(	STANDARD_RIGHTS_REQUIRED | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE
 	,	FALSE
 	,	g_process_id
 	);
-file_log("L %d", __LINE__);
 	if(NULL==hProcess)
 		return file_log("Error in OpenProcess")?FALSE:FALSE;
-file_log("L %d", __LINE__);
 	b_res=ReadProcessMemory
 	(	hProcess // [in]  HANDLE  hProcess
 	,	lp_game_memory_address // [in]  LPCVOID lpBaseAddress
@@ -365,49 +357,38 @@ file_log("L %d", __LINE__);
 	,	p_definition->cheat_num_bytes // [in]  SIZE_T  nSize
 	,	&NumberOfBytesRead // [out] SIZE_T  *lpNumberOfBytesRead
 	);
-file_log("L %d", __LINE__);
 	if(0 == b_res) {
-file_log("L %d", __LINE__);
 		CloseHandle(hProcess);
 		return file_log("Error reading memory")?FALSE:FALSE;
 	}
-file_log("L %d", __LINE__);
 
 	if(NumberOfBytesRead != p_definition->cheat_num_bytes) {
-file_log("L %d", __LINE__);
 		CloseHandle(hProcess);
 		return file_log("Size mismatch reading memory")?FALSE:FALSE;
 	}
 // check the original contents only if not a codecave (because the address is calculatd each time)
-//	if( 0 == p_definition->code_cave)
-//		for(int i=0; i<p_definition->cheat_num_bytes; i++)
-//			if(memory_contents[i]!=check_buffer[i]) {
-//file_log("L %d", __LINE__);
-//				CloseHandle(hProcess);
-//		file_log("L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
-//		,	check_buffer[0]
-//		,	check_buffer[1]
-//		,	check_buffer[2]
-//		,	check_buffer[3]
-//		,	check_buffer[4]
-//		);
-//		file_log( "L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
-//		,	memory_contents[0]
-//		,	memory_contents[1]
-//		,	memory_contents[2]
-//		,	memory_contents[3]
-//		,	memory_contents[4]
-//		);
-//				return file_log("L %d Original memory content don't match", __LINE__)?FALSE:FALSE;
-//		}
-file_log("L %d writing 0x%X 0x%X 0x%X 0x%X 0x%X  at `0x%.16llX`", __LINE__
-,	cheat_contents[0]
-,	cheat_contents[1]
-,	cheat_contents[2]
-,	cheat_contents[3]
-,	cheat_contents[4]
-,	lp_game_memory_address
-); // cheatos!perform_action+0x589 (+ o -)
+	if(	0 == p_definition->code_cave // if NOT a codecave
+	) {
+		for(int i=0; i<p_definition->cheat_num_bytes; i++)
+			if(memory_contents[i]!=check_buffer[i]) {
+				CloseHandle(hProcess);
+		file_log("L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
+		,	check_buffer[0]
+		,	check_buffer[1]
+		,	check_buffer[2]
+		,	check_buffer[3]
+		,	check_buffer[4]
+		);
+		file_log( "L %d: 0x%X 0x%X 0x%X 0x%X 0x%X", __LINE__
+		,	memory_contents[0]
+		,	memory_contents[1]
+		,	memory_contents[2]
+		,	memory_contents[3]
+		,	memory_contents[4]
+		);
+				return file_log("L %d Original memory content don't match", __LINE__)?FALSE:FALSE;
+		}
+	}
 	b_res = WriteProcessMemory
 	(	hProcess //  [in]  HANDLE  hProcess
 	,	lp_game_memory_address // [in]  LPVOID  lpBaseAddress
@@ -415,19 +396,15 @@ file_log("L %d writing 0x%X 0x%X 0x%X 0x%X 0x%X  at `0x%.16llX`", __LINE__
 	,	p_definition->cheat_num_bytes //[in]  SIZE_T  nSize
 	,	&NumberOfBytesWritten // [out] SIZE_T *lpNumberOfBytesWritten
 	);
-file_log("L %d", __LINE__);
 	if(0==b_res) {
 		CloseHandle(hProcess);
 		return file_log("Error writing memory")?FALSE:FALSE;
 	}
-file_log("L %d", __LINE__);
 	if(NumberOfBytesWritten != p_definition->cheat_num_bytes) {
 		CloseHandle(hProcess);
 		return file_log("Size mismatch reading memory")?FALSE:FALSE;
 	}
-file_log("L %d", __LINE__);
 	CloseHandle(hProcess);
-file_log("L %d", __LINE__);
 	Sleep(1000);
 	return 1;
 }
