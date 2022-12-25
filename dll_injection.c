@@ -26,7 +26,11 @@ DWORD WINAPI dll_thread(LPVOID param)
 		}
 		if(GetAsyncKeyState(VK_NUMPAD4) ){ // VK_F10 VK_NUMPAD4
 			cheat_status[4]=!cheat_status[4];
+			reset_acceleration_value();
 			perform_action(MOVEMENT_SPEED, cheat_status[4]);
+		}
+		if(GetAsyncKeyState(VK_NUMPAD5) ){
+			increase_acceleration_value();
 		}
 		if(GetAsyncKeyState(VK_NUMPAD0) ){
 			return 0;

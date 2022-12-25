@@ -53,9 +53,22 @@ int file_log(char* format, ...){
 }
 
 
+long int g_integer;
+float g_float;
+
+void reset_acceleration_value(){
+//	g_integer=0;
+	g_float=0;
+}
+
+void increase_acceleration_value(){
+//	g_integer++;
+	g_float+=5;
+	file_log( "%s:%d now `%f`", __FILE__, __LINE__, g_float );
+}
 
 // cheatos!speed_multiplier
-void speed_multiplier(){
+void continuous_skidding(){ // actually useless
 // this is the original code in the game at the target address GenerationZero_F+0x5e0d9b :
 //
 // 00007ff7`62280d9b f3 0f 59 b0 ac 00 00 00 mulss   xmm6,dword ptr [rax+0ACh]
@@ -67,17 +80,14 @@ void speed_multiplier(){
 // At this place there are 5+7=12 bytes that can be used to store the far call to the cheat code.
 // The original flow will be diverted here:
 __asm__( 
-//	"subq		$0x16, %rsp;" // simulated push xmm0
-//	"movdqu		%xmm0,(%rsp) ;" // save xmm0 (Move Unaligned Double Quadword)
-//	"movq		$3, %rax;" // 3 is the multiplying factor
-//	"movq		%rax, %xmm0;" // move 3 from rax to xmm0
-	"movss		0x18(%rbx),%xmm7;" // original "movss xmm7,dword ptr [rbx+18h]"
-//	"movdqu		(%rsp), %xmm0;" // simulated pop xmm0
-//	"addq		$0x16, %rsp;" // restore stack
-	"movq		$1, %rax;" // at this point it is always 1
-	"mov		0x45a8(%rdi),%rcx;" // original "mov rcx,qword ptr [rdi+45A8h]"
-	"addq		$10,%rcx;"
+	"movss		0x18(%%rbx),%%xmm7;" // original "movss xmm7,dword ptr [rbx+18h]"
+	"mov		0x45a8(%%rdi),%%rcx;" // original "mov rcx,qword ptr [rdi+45A8h]"
+	"movl		%0, %%eax;"
+	"addq		%%rax,%%rcx;"
+	"movq		$1, %%rax;" // at this point it is always 1
 	"ret;"
+	:
+	: "r" (g_integer)
 	);
 // N.B. at the beginning of the speed_multiplier C function there is the function header:
 // 55		push   %rbp
@@ -92,31 +102,50 @@ __asm__ (
 );
 
 /*
-here are the opcodes in speed_multiplier:
+to see the opcodes in speed_multiplier:
 (gdb) disass /r speed_multiplier
-Dump of assembler code for function speed_multiplier:
-   0x00000001400016c8 <+0>:     55      push   %rbp
-   0x00000001400016c9 <+1>:     48 89 e5        mov    %rsp,%rbp
-   0x00000001400016cc <+4>:     50      push   %rax
-   0x00000001400016cd <+5>:     83 ec 10        sub    $0x10,%esp
-   0x00000001400016d0 <+8>:     67 f3 0f 7f 04 24       movdqu %xmm0,(%esp)
-   0x00000001400016d6 <+14>:    48 c7 c0 03 00 00 00    mov    $0x3,%rax
-   0x00000001400016dd <+21>:    66 48 0f 6e c0  movq   %rax,%xmm0
-   0x00000001400016e2 <+26>:    f3 0f 59 c6     mulss  %xmm6,%xmm0
-   0x00000001400016e6 <+30>:    f3 0f 10 7b 18  movss  0x18(%rbx),%xmm7
-   0x00000001400016eb <+35>:    67 f3 0f 6f 04 24       movdqu (%esp),%xmm0
-   0x00000001400016f1 <+41>:    83 c4 10        add    $0x10,%esp
-   0x00000001400016f4 <+44>:    58      pop    %rax
-   0x00000001400016f5 <+45>:    f3 0f 59 b0 ac 00 00 00 mulss  0xac(%rax),%xmm6
-   0x00000001400016fd <+53>:    f3 0f 10 7b 18  movss  0x18(%rbx),%xmm7
-   0x0000000140001702 <+58>:    c3      ret
-   0x0000000140001703 <+59>:    48 a1 88 77 66 55 44 33 22 11   movabs 0x1122334455667788,%rax
-   0x000000014000170d <+69>:    ff d0   call   *%rax
-   0x000000014000170f <+71>:    90      nop
-   0x0000000140001710 <+72>:    90      nop
-   0x0000000140001711 <+73>:    5d      pop    %rbp
-   0x0000000140001712 <+74>:    c3      ret
-End of assembler dump.
+*/
+}
+void speed_multiplier(){
+// this is the original code in the game at the target address GenerationZero_F+0x5e0e66:
+//
+//0x5e0e66 f3 0f 59 e3     MULSS      XMM4,XMM3
+//0x5e0e66 f3 0f 59 e3     	MULSS      XMM4,XMM3   <-- HERE (4 bytes)
+//0x5e0e6a f3 0f 10 54 24 78       MOVSS      XMM2,dword ptr [RSP + local_290] (6 bytes)
+//0x5e0e70 f3 0f 59 d3     MULSS      XMM2,XMM3 (4 bytes) (TOT 14 bytes)
+//
+//andando a vedere con gdb:
+//   0x7ff714100e66:      mulss  %xmm3,%xmm4
+//   0x7ff714100e6a:      movss  0x78(%rsp),%xmm2
+//   0x7ff714100e70:      mulss  %xmm3,%xmm2
+//
+
+// At this place there are 5+7=12 bytes that can be used to store the far call to the cheat code.
+// The original flow will be diverted here:
+__asm__( 
+	"mulss  %xmm3,%xmm4;"
+	"mulss  %xmm3,%xmm4;" // iniziamo a vedere cosa fa facendo due volte la moltiplicezione
+	"movss  0x78(%rsp),%xmm2;"
+	"mulss  %xmm3,%xmm2;"
+	"ret;"
+	);
+// N.B. at the beginning of the speed_multiplier C function there is the function header:
+// 55		push   %rbp
+// 48 89 e5	mov    %rsp,%rbp
+// this means that the __asm__ code up here sits at speed_multiplier()+4
+
+// This is the code that will be written at the target address.
+// It is here for reference only, total 13 bytes	
+__asm__ (
+	"movabs $0x1122334455667788,%rax;" //  48 b8 88 77 66 55 44 33 22 11   (10 bytes)
+	"call *%rax;" // ff d0   (2 bytes)
+	"nop;" // 90 (1 byte)
+	"nop;" // 90 (1 byte)
+);
+
+/*
+to see the opcodes in speed_multiplier:
+(gdb) disass /r speed_multiplier
 */
 }
 
@@ -300,7 +329,12 @@ struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
 	*p_where_to_write++=opcode;
 
 	opcode=0xd0;
-	file_log("L %d: writing `0x%x` at `0x%.16llX`", __LINE__, opcode, p_where_to_write);
+	*p_where_to_write++=opcode;
+
+	opcode=0x90;
+	*p_where_to_write++=opcode;
+
+	opcode=0x90;
 	*p_where_to_write++=opcode;
 
 	return p_new_definition;
@@ -415,7 +449,7 @@ int wait_for_process_and_inject()
 {
 
 	int n_process_id=0;
-	file_log("L %d: wait_for_process_and_inject", __LINE__);
+	reset_acceleration_value();
 
 	do {
 		n_process_id=find_process_id();

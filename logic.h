@@ -9,5 +9,7 @@ int perform_action(int, bool);
 int wait_for_process_and_inject();
 int debug_tests();
 int file_log(char* format, ...);
+void increase_acceleration_value();
+void reset_acceleration_value();
 
 #endif
