@@ -5,36 +5,36 @@
 
 DWORD WINAPI dll_thread(LPVOID param)
 {
-	int cheat_status[4]={0};
+	int cheat_status[10]={0};
 	while(true){
 		if(GetAsyncKeyState(VK_NUMPAD0) ){
-			return 0;
+			return 0; // exit thread
 		}
 		if(GetAsyncKeyState(VK_NUMPAD1) ){
-			cheat_status[0]=!cheat_status[0];
-			perform_action(CHEAT_AMMO, cheat_status[0]);
-			cheat_status[2]=!cheat_status[2];
-			perform_action(CHEAT_NO_RECHARGE, cheat_status[2]);
+			cheat_status[INFINITE_AMMO]=!cheat_status[INFINITE_AMMO];
+			cheat_status[NO_RECHARGE]=!cheat_status[NO_RECHARGE];
+			perform_action(INFINITE_AMMO, cheat_status[INFINITE_AMMO]);
+			perform_action(NO_RECHARGE, cheat_status[NO_RECHARGE]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD2) ){
-			cheat_status[1]=!cheat_status[1];
-			perform_action(CHEAT_LIFE, cheat_status[1]);
+			cheat_status[INFINITE_LIFE]=!cheat_status[INFINITE_LIFE];
+			perform_action(INFINITE_LIFE, cheat_status[INFINITE_LIFE]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD3) ){
-			cheat_status[3]=!cheat_status[3];
-			perform_action(INFINITE_STAMINA, cheat_status[3]);
+			cheat_status[INFINITE_STAMINA]=!cheat_status[INFINITE_STAMINA];
+			perform_action(INFINITE_STAMINA, cheat_status[INFINITE_STAMINA]);
 		}
-		if(GetAsyncKeyState(VK_NUMPAD4) ){ // VK_F10 VK_NUMPAD4
-			cheat_status[4]=!cheat_status[4];
-			reset_acceleration_value();
-			perform_action(MOVEMENT_SPEED, cheat_status[4]);
+		if(GetAsyncKeyState(VK_NUMPAD4) ){
+			cheat_status[ONE_HIT_KILL]=!cheat_status[ONE_HIT_KILL];
+			perform_action(ONE_HIT_KILL, cheat_status[ONE_HIT_KILL]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD5) ){
-			increase_acceleration_value();
+			cheat_status[ZERO_WEIGHT]=!cheat_status[ZERO_WEIGHT];
+			perform_action(ZERO_WEIGHT, cheat_status[ZERO_WEIGHT]);
 		}
-		if(GetAsyncKeyState(VK_NUMPAD0) ){
-			return 0;
-		}
+//		if(GetAsyncKeyState(VK_NUMPAD6) ){ // TODO
+//			increase_acceleration_value();
+//		}
 		Sleep(100);
 	}
 	return 0;

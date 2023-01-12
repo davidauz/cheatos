@@ -57,12 +57,10 @@ long int g_integer;
 float g_float;
 
 void reset_acceleration_value(){
-//	g_integer=0;
-	g_float=0;
+	g_float=1;
 }
 
 void increase_acceleration_value(){
-//	g_integer++;
 	g_float+=5;
 	file_log( "%s:%d now `%f`", __FILE__, __LINE__, g_float );
 }
@@ -89,7 +87,7 @@ __asm__(
 	:
 	: "r" (g_integer)
 	);
-// N.B. at the beginning of the speed_multiplier C function there is the function header:
+// N.B. at the beginning of the C function there is the function header:
 // 55		push   %rbp
 // 48 89 e5	mov    %rsp,%rbp
 // this means that the __asm__ code up here sits at speed_multiplier()+4
@@ -106,10 +104,10 @@ to see the opcodes in speed_multiplier:
 (gdb) disass /r speed_multiplier
 */
 }
-void speed_multiplier(){
+
+void due_volte_moltiplicazione(){
 // this is the original code in the game at the target address GenerationZero_F+0x5e0e66:
 //
-//0x5e0e66 f3 0f 59 e3     MULSS      XMM4,XMM3
 //0x5e0e66 f3 0f 59 e3     	MULSS      XMM4,XMM3   <-- HERE (4 bytes)
 //0x5e0e6a f3 0f 10 54 24 78       MOVSS      XMM2,dword ptr [RSP + local_290] (6 bytes)
 //0x5e0e70 f3 0f 59 d3     MULSS      XMM2,XMM3 (4 bytes) (TOT 14 bytes)
@@ -124,12 +122,12 @@ void speed_multiplier(){
 // The original flow will be diverted here:
 __asm__( 
 	"mulss  %xmm3,%xmm4;"
-	"mulss  %xmm3,%xmm4;" // iniziamo a vedere cosa fa facendo due volte la moltiplicezione
+	"mulss  %xmm3,%xmm4;" // facendo due volte la moltiplicazione in realta rallenta
 	"movss  0x78(%rsp),%xmm2;"
 	"mulss  %xmm3,%xmm2;"
 	"ret;"
 	);
-// N.B. at the beginning of the speed_multiplier C function there is the function header:
+// N.B. at the beginning of the C function there is the function header:
 // 55		push   %rbp
 // 48 89 e5	mov    %rsp,%rbp
 // this means that the __asm__ code up here sits at speed_multiplier()+4
@@ -141,6 +139,60 @@ __asm__ (
 	"call *%rax;" // ff d0   (2 bytes)
 	"nop;" // 90 (1 byte)
 	"nop;" // 90 (1 byte)
+);
+
+/*
+to see the opcodes in speed_multiplier:
+(gdb) disass /r speed_multiplier
+*/
+}
+
+
+void speed_multiplier(){
+// this is the original code in the game at the target location:
+//
+//GenerationZero_F+0x5e0e09:
+//00007ff6`86380e09 45 0f 57 c9        xorps   xmm9,xmm9 (4b)
+//00007ff6`86380e0d f3 44 0f 11 4c 24 50  movss   dword ptr [rsp+50h],xmm9 (7b)
+//00007ff6`86380e14 45 0f 57 d2        xorps   xmm10,xmm10 (4b) TOT 15b
+//00007ff6`86380e18 f3440f11542454  movss   dword ptr [rsp+54h],xmm10
+//00007ff6`86380e1f 450f57db        xorps   xmm11,xmm11
+//00007ff6`86380e23 f3440f115c2458  movss   dword ptr [rsp+58h],xmm11
+//00007ff6`86380e2a f3440f102d75d93101 movss xmm13,dword ptr [GenerationZero_F+0x18fe7a8 (00007ff6`8769e7a8)]
+//00007ff6`86380e33 450f2fe7        comiss  xmm12,xmm15
+//
+//(gdb) x/i 0x7ff686380e09
+//0x7ff686380e09:      xorps  %xmm9,%xmm9
+//0x7ff686380e0d:      movss  %xmm9,0x50(%rsp)
+//0x7ff686380e14:      xorps  %xmm10,%xmm10
+//0x7ff686380e18:      movss  %xmm10,0x54(%rsp)
+//0x7ff686380e1f:      xorps  %xmm11,%xmm11
+//0x7ff686380e23:      movss  %xmm11,0x58(%rsp)
+//0x7ff686380e2a:      movss  0x131d975(%rip),%xmm13        # 0x7ff68769e7a8
+//0x7ff686380e33:      comiss %xmm15,%xmm12
+//0x7ff686380e37:      jbe    0x7ff686380ed7
+
+__asm__( 
+	"movss	%0,%%xmm9;"
+	"mulss	%%xmm12, %%xmm9;" // tanto viene azzerato subito
+	"xorps  %%xmm9,%%xmm9;"
+	"movss  %%xmm9,0x50(%%rsp);"
+	"xorps  %%xmm10,%%xmm10;"
+	"ret;"
+	:
+	: "m" (g_float)
+	);
+// N.B. at the beginning of the speed_multiplier C function there is the function header:
+// 55		push   %rbp
+// 48 89 e5	mov    %rsp,%rbp
+// this means that the __asm__ code up here sits at speed_multiplier()+4
+
+__asm__ (
+	"movabs $0x1122334455667788,%rax;" //  48 b8 88 77 66 55 44 33 22 11   (10 bytes)
+	"call *%rax;" // ff d0   (2 bytes)
+	"nop;" // 90 (1 byte)
+	"nop;" // 90 (1 byte)
+	"nop;" // 90 (1 byte): TOT 15b
 );
 
 /*
@@ -310,7 +362,7 @@ struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
  	p_new_definition->cheat_num_bytes = p_definition->cheat_num_bytes;
 
 	p_where_to_write=(BYTE *)(p_new_definition->cheat_code);
-	opcode=0x48;
+	opcode=0x48; // 48B8 = MOVABS RAX, ...
 	*p_where_to_write++=opcode;
 
 	opcode=0xb8;
@@ -325,16 +377,15 @@ struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
 		codecave_address=codecave_address >> 8;
 	}
 
-	opcode=0xff;
+	opcode=0xff; // FFD0 = CALL RAX
 	*p_where_to_write++=opcode;
 
 	opcode=0xd0;
 	*p_where_to_write++=opcode;
 
-	opcode=0x90;
+	opcode=0x90; // NOP
 	*p_where_to_write++=opcode;
-
-	opcode=0x90;
+	*p_where_to_write++=opcode;
 	*p_where_to_write++=opcode;
 
 	return p_new_definition;
