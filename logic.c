@@ -514,9 +514,3 @@ int wait_for_process_and_inject()
 }
 
 
-int debug_tests(){
-	struct cheat_definition *p_definition=&definitions[MOVEMENT_SPEED];
-	do_codecave(p_definition);
-	return 0;
-}
-

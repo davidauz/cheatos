@@ -59,7 +59,7 @@ static struct cheat_definition {
 	,	"\xF3\x0F\x10\x83\xDC\x00\x00\x00" // movss   xmm0,dword ptr [rbx+0DCh]
 	,	"\xE9\xD2\xB1\xA8\xBF\x90\x90\x90" // jmp + nop
 	,	0 // code cave not used
-	,	0x574e59:
+	,	0x574e59
 	,	8
 	}
 ,	[ZERO_WEIGHT]=
