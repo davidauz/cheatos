@@ -8,11 +8,11 @@ enum cheats
 ,	INFINITE_STAMINA //	3
 ,	ONE_HIT_KILL //		4
 ,	ZERO_WEIGHT  //		5
+,	FLYING  //		6
 //,	MOVEMENT_SPEED TODO
 };
 
-
-void speed_multiplier();
+void flying_codecave_1();
 
 static struct cheat_definition {
 	char		*cheat_prompt;
@@ -68,6 +68,20 @@ static struct cheat_definition {
 	,	"\x0F\x57\xC0\x90\x90\x90\x90\x90" // xorps   xmm0,xmm0, nop
 	,	0 // code cave not used
 	,	0x65f5ec
+	,	8
+	}
+,	[FLYING]=
+	{	"Flying (numpad 6)"
+	,	"\x0F\x29\x7F\x40" // movaps  xmmword ptr [rdi+40h],xmm7 (movaps %xmm7,0x40(%rdi))
+		"\x0F\x29\x77\x50" // movaps  xmmword ptr [rdi+50h],xmm6 (movaps %xmm6,0x50(%rdi))
+	,	"\xFF\x15\x55\x0B\x84\xFE" // call    qword ptr [GenerationZero_F+0x450] ( call   *-0x17BF4AA(%rip) )
+		"\x90\x90" // nop nop (there are even have two bytes to spare)
+// Here RIP is GenerationZero_F+0x17BF8F5
+// Address to codecave func is at GenerationZero_F+0x450; it is written there by void init_jump_table() in dll_injection.c
+// This address relative to RIP is 0x17BF8F5-0x450+5 = 0x17BF4AA (+5 because RIP points to next instruction)
+// But negative: 0XFFFFFFFF-0x17BF4AA = 0xFE840B55 so above there is \xFF\x15 (call qword ptr) \x55\x0B\x84\xFE (address location)
+	,	0
+	,	0x17bf8f5
 	,	8
 	}
 //,	[MOVEMENT_SPEED]= TODO

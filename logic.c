@@ -12,16 +12,16 @@
 
 #define UNINITIALIZED 0xFFFFFFFF
 #define TARGET_EXE "GenerationZero_F.exe"
-//#define TARGET_EXE "notepad.exe" // for tests
-//#define TARGET_EXE "test_mem_analysis.exe" // for tests (again)
 
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;
+//long int g_integer;
+float g_float;
 
 
 int file_log(char* format, ...){
 	char buf[255]
-	,	*filename="log.txt"
+	,	*filename="c:\\log.txt" // this should be passed as a parameter
 	;
 	DWORD	dwBytesWritten;
 	va_list argptr;
@@ -53,57 +53,68 @@ int file_log(char* format, ...){
 }
 
 
-long int g_integer;
-float g_float;
-
 void reset_acceleration_value(){
-	g_float=1;
+	g_float=0;
+	file_log( "%s:%d now `%f`", __FILE__, __LINE__, g_float );
+}
+
+
+void flying_codecave_1(){
+__asm__(
+	"movss  0x44(%%rdi),%%xmm2;"	// put rdi+68 in xmm2
+	"addss  %0,%%xmm2;"		// add the parameter to xmm2
+	"movss  %%xmm2,0x44(%%rdi);"	// result goes to rdi+0x44
+	"movaps %%xmm6,0x50(%%rdi);"	// original instruction
+	"ret;"
+	:
+	: "m" (g_float)
+);
 }
 
 void increase_acceleration_value(){
-	g_float+=5;
+	g_float+=10;
 	file_log( "%s:%d now `%f`", __FILE__, __LINE__, g_float );
 }
 
 // cheatos!speed_multiplier
-void continuous_skidding(){ // actually useless
-// this is the original code in the game at the target address GenerationZero_F+0x5e0d9b :
+//void continuous_skidding(){ // actually useless
+//// this is the original code in the game at the target address GenerationZero_F+0x5e0d9b :
+////
+//// 00007ff7`62280d9b f3 0f 59 b0 ac 00 00 00 mulss   xmm6,dword ptr [rax+0ACh]
+//// 00007ff7`62280da3 f3 0f 10 7b 18      movss   xmm7,dword ptr [rbx+18h] (5 bytes) <-- injection here
+//// 00007ff7`62280da8 48 8b 8f a8 45 00 00  mov     rcx,qword ptr [rdi+45A8h] (7 bytes)
+//// 00007ff7`62280daf e8fcfbc2ff      call    GenerationZero_F+0x2109b0 (00007ff7`61eb09b0)
+//// 00007ff7`62280db4 0fb6f0          movzx   esi,al
+////
+//// At this place there are 5+7=12 bytes that can be used to store the far call to the cheat code.
+//// The original flow will be diverted here:
+//__asm__( 
+//	"movss		0x18(%%rbx),%%xmm7;" // original "movss xmm7,dword ptr [rbx+18h]"
+//	"mov		0x45a8(%%rdi),%%rcx;" // original "mov rcx,qword ptr [rdi+45A8h]"
+//	"movl		%0, %%eax;" // this %0 is the parameter below
+//	"addq		%%rax,%%rcx;"
+//	"movq		$1, %%rax;" // at this point it is always 1
+//	"ret;"
+//	:
+//	: "r" (g_integer)
+//	);
+//// N.B. at the beginning of the C function there is the function header:
+//// 55		push   %rbp
+//// 48 89 e5	mov    %rsp,%rbp
+//// this means that the __asm__ code up here sits at speed_multiplier()+4
 //
-// 00007ff7`62280d9b f3 0f 59 b0 ac 00 00 00 mulss   xmm6,dword ptr [rax+0ACh]
-// 00007ff7`62280da3 f3 0f 10 7b 18      movss   xmm7,dword ptr [rbx+18h] (5 bytes) <-- injection here
-// 00007ff7`62280da8 48 8b 8f a8 45 00 00  mov     rcx,qword ptr [rdi+45A8h] (7 bytes)
-// 00007ff7`62280daf e8fcfbc2ff      call    GenerationZero_F+0x2109b0 (00007ff7`61eb09b0)
-// 00007ff7`62280db4 0fb6f0          movzx   esi,al
+//// This is the code that will be written at the target address.
+//// It is here for reference only, total 13 bytes	
+//__asm__ (
+//	"movabs $0x1122334455667788,%rax;" //  48 b8 88 77 66 55 44 33 22 11   (10 bytes)
+//	"call *%rax;" // ff d0   (2 bytes)
+//);
 //
-// At this place there are 5+7=12 bytes that can be used to store the far call to the cheat code.
-// The original flow will be diverted here:
-__asm__( 
-	"movss		0x18(%%rbx),%%xmm7;" // original "movss xmm7,dword ptr [rbx+18h]"
-	"mov		0x45a8(%%rdi),%%rcx;" // original "mov rcx,qword ptr [rdi+45A8h]"
-	"movl		%0, %%eax;"
-	"addq		%%rax,%%rcx;"
-	"movq		$1, %%rax;" // at this point it is always 1
-	"ret;"
-	:
-	: "r" (g_integer)
-	);
-// N.B. at the beginning of the C function there is the function header:
-// 55		push   %rbp
-// 48 89 e5	mov    %rsp,%rbp
-// this means that the __asm__ code up here sits at speed_multiplier()+4
-
-// This is the code that will be written at the target address.
-// It is here for reference only, total 13 bytes	
-__asm__ (
-	"movabs $0x1122334455667788,%rax;" //  48 b8 88 77 66 55 44 33 22 11   (10 bytes)
-	"call *%rax;" // ff d0   (2 bytes)
-);
-
-/*
-to see the opcodes in speed_multiplier:
-(gdb) disass /r speed_multiplier
-*/
-}
+///*
+//to see the opcodes in speed_multiplier:
+//(gdb) disass /r speed_multiplier
+//*/
+//}
 
 void due_volte_moltiplicazione(){
 // this is the original code in the game at the target address GenerationZero_F+0x5e0e66:
@@ -148,58 +159,58 @@ to see the opcodes in speed_multiplier:
 }
 
 
-void speed_multiplier(){
-// this is the original code in the game at the target location:
+//void speed_multiplier(){
+//// this is the original code in the game at the target location:
+////
+////GenerationZero_F+0x5e0e09:
+////00007ff6`86380e09 45 0f 57 c9        xorps   xmm9,xmm9 (4b)
+////00007ff6`86380e0d f3 44 0f 11 4c 24 50  movss   dword ptr [rsp+50h],xmm9 (7b)
+////00007ff6`86380e14 45 0f 57 d2        xorps   xmm10,xmm10 (4b) TOT 15b
+////00007ff6`86380e18 f3440f11542454  movss   dword ptr [rsp+54h],xmm10
+////00007ff6`86380e1f 450f57db        xorps   xmm11,xmm11
+////00007ff6`86380e23 f3440f115c2458  movss   dword ptr [rsp+58h],xmm11
+////00007ff6`86380e2a f3440f102d75d93101 movss xmm13,dword ptr [GenerationZero_F+0x18fe7a8 (00007ff6`8769e7a8)]
+////00007ff6`86380e33 450f2fe7        comiss  xmm12,xmm15
+////
+////(gdb) x/i 0x7ff686380e09
+////0x7ff686380e09:      xorps  %xmm9,%xmm9
+////0x7ff686380e0d:      movss  %xmm9,0x50(%rsp)
+////0x7ff686380e14:      xorps  %xmm10,%xmm10
+////0x7ff686380e18:      movss  %xmm10,0x54(%rsp)
+////0x7ff686380e1f:      xorps  %xmm11,%xmm11
+////0x7ff686380e23:      movss  %xmm11,0x58(%rsp)
+////0x7ff686380e2a:      movss  0x131d975(%rip),%xmm13        # 0x7ff68769e7a8
+////0x7ff686380e33:      comiss %xmm15,%xmm12
+////0x7ff686380e37:      jbe    0x7ff686380ed7
 //
-//GenerationZero_F+0x5e0e09:
-//00007ff6`86380e09 45 0f 57 c9        xorps   xmm9,xmm9 (4b)
-//00007ff6`86380e0d f3 44 0f 11 4c 24 50  movss   dword ptr [rsp+50h],xmm9 (7b)
-//00007ff6`86380e14 45 0f 57 d2        xorps   xmm10,xmm10 (4b) TOT 15b
-//00007ff6`86380e18 f3440f11542454  movss   dword ptr [rsp+54h],xmm10
-//00007ff6`86380e1f 450f57db        xorps   xmm11,xmm11
-//00007ff6`86380e23 f3440f115c2458  movss   dword ptr [rsp+58h],xmm11
-//00007ff6`86380e2a f3440f102d75d93101 movss xmm13,dword ptr [GenerationZero_F+0x18fe7a8 (00007ff6`8769e7a8)]
-//00007ff6`86380e33 450f2fe7        comiss  xmm12,xmm15
+//__asm__( 
+//	"movss	%0,%%xmm9;"
+//	"mulss	%%xmm12, %%xmm9;" // tanto viene azzerato subito
+//	"xorps  %%xmm9,%%xmm9;"
+//	"movss  %%xmm9,0x50(%%rsp);"
+//	"xorps  %%xmm10,%%xmm10;"
+//	"ret;"
+//	:
+//	: "m" (g_float)
+//	);
+//// N.B. at the beginning of the speed_multiplier C function there is the function header:
+//// 55		push   %rbp
+//// 48 89 e5	mov    %rsp,%rbp
+//// this means that the __asm__ code up here sits at speed_multiplier()+4
 //
-//(gdb) x/i 0x7ff686380e09
-//0x7ff686380e09:      xorps  %xmm9,%xmm9
-//0x7ff686380e0d:      movss  %xmm9,0x50(%rsp)
-//0x7ff686380e14:      xorps  %xmm10,%xmm10
-//0x7ff686380e18:      movss  %xmm10,0x54(%rsp)
-//0x7ff686380e1f:      xorps  %xmm11,%xmm11
-//0x7ff686380e23:      movss  %xmm11,0x58(%rsp)
-//0x7ff686380e2a:      movss  0x131d975(%rip),%xmm13        # 0x7ff68769e7a8
-//0x7ff686380e33:      comiss %xmm15,%xmm12
-//0x7ff686380e37:      jbe    0x7ff686380ed7
-
-__asm__( 
-	"movss	%0,%%xmm9;"
-	"mulss	%%xmm12, %%xmm9;" // tanto viene azzerato subito
-	"xorps  %%xmm9,%%xmm9;"
-	"movss  %%xmm9,0x50(%%rsp);"
-	"xorps  %%xmm10,%%xmm10;"
-	"ret;"
-	:
-	: "m" (g_float)
-	);
-// N.B. at the beginning of the speed_multiplier C function there is the function header:
-// 55		push   %rbp
-// 48 89 e5	mov    %rsp,%rbp
-// this means that the __asm__ code up here sits at speed_multiplier()+4
-
-__asm__ (
-	"movabs $0x1122334455667788,%rax;" //  48 b8 88 77 66 55 44 33 22 11   (10 bytes)
-	"call *%rax;" // ff d0   (2 bytes)
-	"nop;" // 90 (1 byte)
-	"nop;" // 90 (1 byte)
-	"nop;" // 90 (1 byte): TOT 15b
-);
-
-/*
-to see the opcodes in speed_multiplier:
-(gdb) disass /r speed_multiplier
-*/
-}
+//__asm__ (
+//	"movabs $0x1122334455667788,%rax;" //  48 b8 88 77 66 55 44 33 22 11   (10 bytes)
+//	"call *%rax;" // ff d0   (2 bytes)
+//	"nop;" // 90 (1 byte)
+//	"nop;" // 90 (1 byte)
+//	"nop;" // 90 (1 byte): TOT 15b
+//);
+//
+///*
+//to see the opcodes in speed_multiplier:
+//(gdb) disass /r speed_multiplier
+//*/
+//}
 
 BYTE * find_process_base_address(DWORD processID_) 
 {
@@ -267,6 +278,12 @@ int find_process_id(){
 	} while( Process32Next( hProcessSnap, &pe32 ) );
 
 	return g_process_id;
+}
+
+BYTE *get_base_address(){
+	if(0==g_baseAddress)
+		find_process_id();
+	return g_baseAddress;
 }
 
 int perform_dll_injection() {
@@ -369,7 +386,7 @@ struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
 	*p_where_to_write++=opcode;
 
 	codecave_address = (unsigned long long)p_codecave_function;
-	codecave_address+=4;// to compensate for function header
+	codecave_address+=4;// to compensate for boilerplate
 
 	for(int idx=0; idx<8; idx++) {
 		opcode=codecave_address & 0xFF;
@@ -393,7 +410,10 @@ struct cheat_definition * do_codecave(struct cheat_definition *p_definition) {
 
 
 
-int perform_action(int cheat_id, bool on_off) {
+int perform_action
+(	int cheat_id
+,	bool on_off
+) {
 	struct cheat_definition *p_definition=&definitions[cheat_id];
 
 	if(0==g_process_id)
