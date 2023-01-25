@@ -75,28 +75,15 @@ static struct cheat_definition {
 	,	"\x0F\x29\x7F\x40" // movaps  xmmword ptr [rdi+40h],xmm7 (movaps %xmm7,0x40(%rdi))
 		"\x0F\x29\x77\x50" // movaps  xmmword ptr [rdi+50h],xmm6 (movaps %xmm6,0x50(%rdi))
 	,	"\xFF\x15\x55\x0B\x84\xFE" // call    qword ptr [GenerationZero_F+0x450] ( call   *-0x17BF4AA(%rip) )
-		"\x90\x90" // nop nop (there are even have two bytes to spare)
+		"\x90\x90" // nop nop (and even two bytes to spare)
 // Here RIP is GenerationZero_F+0x17BF8F5
-// Address to codecave func is at GenerationZero_F+0x450; it is written there by void init_jump_table() in dll_injection.c
+// Address to codecave func is at GenerationZero_F+0x450; it is written there by init_jump_table() in dll_injection.c
 // This address relative to RIP is 0x17BF8F5-0x450+5 = 0x17BF4AA (+5 because RIP points to next instruction)
 // But negative: 0XFFFFFFFF-0x17BF4AA = 0xFE840B55 so above there is \xFF\x15 (call qword ptr) \x55\x0B\x84\xFE (address location)
 	,	0
 	,	0x17bf8f5
 	,	8
 	}
-//,	[MOVEMENT_SPEED]= TODO
-//	{	"Movement Speed (numpad 5;+6,-7)" // cheat_prompt
-//	,	"\x45\x0f\x57\xc9" // xorps   xmm9,xmm9 (4b)
-//		"\xf3\x44\x0f\x11\x4c\x24\x50" // movss   dword ptr [rsp+50h],xmm9 (7b)
-//		"\x45\x0f\x57\xd2" // xorps   xmm10,xmm10 (4b) TOT 15b
-//	,	"\x48\xb8\x88\x77\x66\x55\x44\x33\x22\x11" // movabs 0x1122334455667788,%rax; will be calculated every time (10b)
-//		"\xff\xd0" // call *%rax; (2b)
-//		"\x90\x90\x90" // nop nop; (3b, tot 15b)
-//	,	speed_multiplier
-//	,	0x5e0e09
-//// bogus function at test_mem_analysis.exe+0x0000000000001900
-//	,	15
-//	}
 };
 
 #endif

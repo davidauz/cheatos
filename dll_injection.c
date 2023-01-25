@@ -4,8 +4,8 @@
 #include "logic.h"
 
 void init_jump_table(){
-// certain hacks need a place where to store the address to jump to.
-// looks like base address+0x450 is empty, let's store there the jump table.
+// Certain hacks need space to store the address to jump to.
+// Looks like base address+0x450 is empty, let's put our junk there.
 	DWORD	oldProtect;
 	BYTE *jump_table=get_base_address()+0x450;
 	VirtualProtect( jump_table , 8, PAGE_EXECUTE_READWRITE, &oldProtect);
@@ -18,6 +18,7 @@ DWORD WINAPI dll_thread(LPVOID param)
 {
 	int cheat_status[10]={0};
 	init_jump_table();
+	reset_acceleration_value();
 	while(true){
 		if(GetAsyncKeyState(VK_NUMPAD0) ){
 			return 0; // exit thread
@@ -45,14 +46,14 @@ DWORD WINAPI dll_thread(LPVOID param)
 			perform_action(ZERO_WEIGHT, cheat_status[ZERO_WEIGHT]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD6) ){
-			cheat_status[FLYING]=!cheat_status[FLYING];
-			perform_action(FLYING, cheat_status[FLYING]);
-		}
-		if(GetAsyncKeyState(VK_NUMPAD7) ){
-			increase_acceleration_value();
-		}
-		if(GetAsyncKeyState(VK_NUMPAD8) ){
-			reset_acceleration_value();
+			if( GetAsyncKeyState(VK_MENU) )
+				increase_acceleration_value();
+			else if( GetAsyncKeyState(VK_CONTROL) )
+				reset_acceleration_value();
+			else {
+				cheat_status[FLYING]=!cheat_status[FLYING];
+				perform_action(FLYING, cheat_status[FLYING]);
+			}
 		}
 		Sleep(100);
 	}
