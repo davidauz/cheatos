@@ -3,16 +3,17 @@
 
 enum cheats
 {	INFINITE_AMMO=0
-,	INFINITE_LIFE //	1
-,	NO_RECHARGE //		2
-,	INFINITE_STAMINA //	3
-,	ONE_HIT_KILL //		4
-,	ZERO_WEIGHT  //		5
-,	FLYING  //		6
-//,	MOVEMENT_SPEED TODO
+,	INFINITE_LIFE	//	1
+,	NO_RECHARGE	//	2
+,	INFINITE_STAMINA//	3
+,	ONE_HIT_KILL	//	4
+,	ZERO_WEIGHT	//	5
+,	FLYING		//	6
+,	RUNNING		//	7
 };
 
-void flying_codecave_1();
+void flying_codecave();
+void super_speed_codecave();
 
 static struct cheat_definition {
 	char		*cheat_prompt;
@@ -74,15 +75,30 @@ static struct cheat_definition {
 	{	"Flying (numpad 6)"
 	,	"\x0F\x29\x7F\x40" // movaps  xmmword ptr [rdi+40h],xmm7 (movaps %xmm7,0x40(%rdi))
 		"\x0F\x29\x77\x50" // movaps  xmmword ptr [rdi+50h],xmm6 (movaps %xmm6,0x50(%rdi))
-	,	"\xFF\x15\x55\x0B\x84\xFE" // call    qword ptr [GenerationZero_F+0x450] ( call   *-0x17BF4AA(%rip) )
+	,	"\xFF\x15\x55\x0B\x84\xFE" // call    qword ptr [GenerationZero_F+0x450] ( call   *-0xFE840b55(%rip) )
 		"\x90\x90" // nop nop (and even two bytes to spare)
 // Here RIP is GenerationZero_F+0x17BF8F5
-// Address to codecave func is at GenerationZero_F+0x450; it is written there by init_jump_table() in dll_injection.c
-// This address relative to RIP is 0x17BF8F5-0x450+5 = 0x17BF4AA (+5 because RIP points to next instruction)
-// But negative: 0XFFFFFFFF-0x17BF4AA = 0xFE840B55 so above there is \xFF\x15 (call qword ptr) \x55\x0B\x84\xFE (address location)
+// Jump table is at GenerationZero_F+0x450; it is written there by init_jump_table() in dll_injection.c
+// Jump table relative to RIP is 0x17BF8F5-0x450+5 = 0x17BF4AA (+5 because RIP points to next instruction)
+// But it is negative: 0XFFFFFFFF-0x17BF4AA = 0xFE840B55
+// So up here is \xFF\x15 (call qword ptr) \x55\x0B\x84\xFE (address location)
 	,	0
 	,	0x17bf8f5
 	,	8
+	}
+,	[RUNNING]=
+	{	"Running (numpad 7)"
+	,	"\xf3\x0f\x10\x76\x1c"	// movss  0x1c(%rsi),%xmm6 (5 bytes)
+		"\xf3\x0f\x5c\x76\x18"	// subss  0x18(%rsi),%xmm6 (5 bytes)
+		"\xf3\x41\x0f\x59\xf6"	//  mulss  %xmm14,%xmm6 (5 bytes, tot 15 bytes)
+	,	"\xFF\x15\x3a\xf7\xa1\xff" // call    qword ptr [GenerationZero_F+0x458] ( call   *-0xffa1f72a(%rip) , 6 bytes)
+		"\x90\x90\x90\x90" // nop nop nop nop (4 bytes)
+		"\x90\x90\x90\x90\x90" // nop nop nop nop nop (5 bytes. total 15)
+// p /x 0x5e0d18-0x450+5-8 = 0x005e08c5 (+5 because RIP points to next instruction, -8 because it is the second address in the table)
+// But negative: p /x 0XFFFFFFFF-0x5e08c5 = 0xffa1f73a
+	,	0
+	,	0x5e0d18 // GenerationZero_F+0x5e0d18
+	,	15
 	}
 };
 

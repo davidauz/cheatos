@@ -15,8 +15,8 @@
 
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;
-//long int g_integer;
 float g_float;
+float g_speed=4;
 
 
 int file_log(char* format, ...){
@@ -52,8 +52,20 @@ int file_log(char* format, ...){
 	return 0;
 }
 
+void super_speed_codecave(){
+__asm__(
+	"movss  0x1c(%%rsi),%%xmm6;"	//	put rsi+0x1c in xmm6 (original instruction)
+	"mulss  %0,%%xmm6;"	//	multiply xmm6 by parameter
+"exit:"
+	"subss  0x18(%%rsi),%%xmm6;"	//	original instruction
+	"mulss  %%xmm14,%%xmm6;"		//	original instruction
+	"ret;"
+	:
+	: "m" (g_speed)
+);
+}
 
-void flying_codecave_1(){
+void flying_codecave(){
 __asm__(
 	"movss  0x44(%%rdi),%%xmm2;"	// put rdi+68 in xmm2
 	"addss  %0,%%xmm2;"		// add g_float to xmm2
@@ -65,15 +77,24 @@ __asm__(
 );
 }
 
-void reset_acceleration_value(){
-	g_float=0;
-	file_log( "%s:%d now `%f`", __FILE__, __LINE__, g_float );
+void reset_speed(){
+	g_speed=0;
+	file_log( "%s:%d SPEED now `%f`", __FILE__, __LINE__, g_speed );
 }
 
+void reset_acceleration_value(){
+	g_float=5;
+	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_float );
+}
+
+void increase_speed(){
+	g_speed+=10;
+	file_log( "%s:%d SPEED now `%f`", __FILE__, __LINE__, g_speed );
+}
 
 void increase_acceleration_value(){
 	g_float+=10;
-	file_log( "%s:%d now `%f`", __FILE__, __LINE__, g_float );
+	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_float );
 }
 
 

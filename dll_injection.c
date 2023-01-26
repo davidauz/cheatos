@@ -9,7 +9,9 @@ void init_jump_table(){
 	DWORD	oldProtect;
 	BYTE *jump_table=get_base_address()+0x450;
 	VirtualProtect( jump_table , 8, PAGE_EXECUTE_READWRITE, &oldProtect);
-	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave_1+4;
+	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4;
+	jump_table+=8;
+	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4;
 	VirtualProtect( jump_table , 8, oldProtect, &oldProtect);
 }
 
@@ -46,13 +48,23 @@ DWORD WINAPI dll_thread(LPVOID param)
 			perform_action(ZERO_WEIGHT, cheat_status[ZERO_WEIGHT]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD6) ){
-			if( GetAsyncKeyState(VK_MENU) )
+			if( GetAsyncKeyState(VK_MENU) )	//	ALT key
 				increase_acceleration_value();
 			else if( GetAsyncKeyState(VK_CONTROL) )
 				reset_acceleration_value();
 			else {
 				cheat_status[FLYING]=!cheat_status[FLYING];
 				perform_action(FLYING, cheat_status[FLYING]);
+			}
+		}
+		if(GetAsyncKeyState(VK_NUMPAD7) ){
+			if( GetAsyncKeyState(VK_MENU) )	//	ALT key
+				increase_speed();
+			else if( GetAsyncKeyState(VK_CONTROL) )
+				reset_speed();
+			else {
+				cheat_status[RUNNING]=!cheat_status[RUNNING];
+				perform_action(RUNNING, cheat_status[RUNNING]);
 			}
 		}
 		Sleep(100);
