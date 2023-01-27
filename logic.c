@@ -15,8 +15,10 @@
 
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;
-float g_float;
-float g_speed=4;
+float	g_y_acceleration
+,	g_speed=40
+,	g_PAIN=50
+;
 
 
 int file_log(char* format, ...){
@@ -52,6 +54,25 @@ int file_log(char* format, ...){
 	return 0;
 }
 
+void reset_pain(){
+	g_PAIN=0;
+	file_log( "%s:%d pain now `%f`", __FILE__, __LINE__, g_PAIN );
+}
+void increase_pain(){
+	g_PAIN+=10;
+	file_log( "%s:%d pain now `%f`", __FILE__, __LINE__, g_PAIN );
+}
+void easy_kill_codecave(){
+__asm__(
+	"movss  %0,%%xmm2;"
+	"mulss  0x20(%%rbx),%%xmm2;"
+	"mulss  %%xmm0,%%xmm2;"
+	"ret;"
+	:
+	: "m" (g_PAIN)
+);
+}
+
 void super_speed_codecave(){
 __asm__(
 	"movss  0x1c(%%rsi),%%xmm6;"	//	put rsi+0x1c in xmm6 (original instruction)
@@ -68,12 +89,12 @@ __asm__(
 void flying_codecave(){
 __asm__(
 	"movss  0x44(%%rdi),%%xmm2;"	// put rdi+68 in xmm2
-	"addss  %0,%%xmm2;"		// add g_float to xmm2
+	"addss  %0,%%xmm2;"		// add g_y_acceleration to xmm2
 	"movss  %%xmm2,0x44(%%rdi);"	// result goes to rdi+0x44
 	"movaps %%xmm6,0x50(%%rdi);"	// original instruction
 	"ret;"
 	:
-	: "m" (g_float)
+	: "m" (g_y_acceleration)
 );
 }
 
@@ -83,8 +104,8 @@ void reset_speed(){
 }
 
 void reset_acceleration_value(){
-	g_float=5;
-	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_float );
+	g_y_acceleration=5;
+	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
 }
 
 void increase_speed(){
@@ -93,8 +114,8 @@ void increase_speed(){
 }
 
 void increase_acceleration_value(){
-	g_float+=10;
-	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_float );
+	g_y_acceleration+=10;
+	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
 }
 
 

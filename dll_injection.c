@@ -12,6 +12,8 @@ void init_jump_table(){
 	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4;
 	jump_table+=8;
 	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4;
+	jump_table+=8;
+	*(unsigned long long *)jump_table=(unsigned long long)easy_kill_codecave+4;
 	VirtualProtect( jump_table , 8, oldProtect, &oldProtect);
 }
 
@@ -40,8 +42,14 @@ DWORD WINAPI dll_thread(LPVOID param)
 			perform_action(INFINITE_STAMINA, cheat_status[INFINITE_STAMINA]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD4) ){
-			cheat_status[ONE_HIT_KILL]=!cheat_status[ONE_HIT_KILL];
-			perform_action(ONE_HIT_KILL, cheat_status[ONE_HIT_KILL]);
+			if( GetAsyncKeyState(VK_MENU) )	//	ALT key
+				increase_pain();
+			else if( GetAsyncKeyState(VK_CONTROL) )
+				reset_pain();
+			else {
+				cheat_status[LETS_KILL]=!cheat_status[LETS_KILL];
+				perform_action(LETS_KILL, cheat_status[LETS_KILL]);
+			}
 		}
 		if(GetAsyncKeyState(VK_NUMPAD5) ){
 			cheat_status[ZERO_WEIGHT]=!cheat_status[ZERO_WEIGHT];
@@ -53,8 +61,8 @@ DWORD WINAPI dll_thread(LPVOID param)
 			else if( GetAsyncKeyState(VK_CONTROL) )
 				reset_acceleration_value();
 			else {
-				cheat_status[FLYING]=!cheat_status[FLYING];
-				perform_action(FLYING, cheat_status[FLYING]);
+				cheat_status[LETS_FLY]=!cheat_status[LETS_FLY];
+				perform_action(LETS_FLY, cheat_status[LETS_FLY]);
 			}
 		}
 		if(GetAsyncKeyState(VK_NUMPAD7) ){
@@ -63,8 +71,8 @@ DWORD WINAPI dll_thread(LPVOID param)
 			else if( GetAsyncKeyState(VK_CONTROL) )
 				reset_speed();
 			else {
-				cheat_status[RUNNING]=!cheat_status[RUNNING];
-				perform_action(RUNNING, cheat_status[RUNNING]);
+				cheat_status[LETS_RUN]=!cheat_status[LETS_RUN];
+				perform_action(LETS_RUN, cheat_status[LETS_RUN]);
 			}
 		}
 		Sleep(100);
