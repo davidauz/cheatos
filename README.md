@@ -1,20 +1,20 @@
 # cheatos
 Simple game cheater for the awesome game Generation Zero.
 
-It is written in pure C.
+Written in pure C, it works on v16.08.2022 and maybe other versions as well.
 
 There is no interface; it injects into the running process and then waits for numpad keystrokes.
 
-#numpad 1: Infinite ammo
+#Numpad 1: Infinite ammo
 
-#numpad 2: Infinite life
+#Numpad 2: Infinite life
 
-#numpad 3: Infinite stamina
+#Numpad 3: Infinite stamina
 
-#numpad 4: Easy kill
+#Numpad 4: Easy kill
 
-#numpad 5: Zero weight
+#Numpad 5: Zero weight
 
-#numpad 6: Fly like a bird
+#Numpad 6: Fly like a bird
 
-#numpad 7: Run FAST
+#Numpad 7: Run FAST

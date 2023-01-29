@@ -8,10 +8,10 @@ all: cheatos.exe cheatos.dll
 	@echo "ALL DONE"
 
 cheatos.exe : $(cheatos_obj) $(headers)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(cheatos_obj)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(cheatos_obj) -lwinmm
 
 cheatos.dll : dll_injection.o logic.o $(headers)
-	$(CC) -shared -o cheatos.dll dll_injection.o logic.o
+	$(CC) -shared -o cheatos.dll dll_injection.o logic.o -lwinmm
 
 # .c.o:
 %.o: %.c $(headers)

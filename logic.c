@@ -9,6 +9,8 @@
 
 #include "logic.h"
 #include "definitions.h"
+#include "sounds\down.c"
+#include "sounds\up.c"
 
 #define UNINITIALIZED 0xFFFFFFFF
 #define TARGET_EXE "GenerationZero_F.exe"
@@ -274,6 +276,10 @@ int perform_action
 ,	bool on_off
 ) {
 	struct cheat_definition *p_definition=&definitions[cheat_id];
+	char *snd=sound_UP;
+	if(0==on_off)
+		snd=sound_DOWN;
+	PlaySound(snd, NULL, SND_MEMORY | SND_ASYNC | SND_NODEFAULT); 
 
 	if(0==g_process_id)
 		find_process_id();
