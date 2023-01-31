@@ -8,13 +8,15 @@ void init_jump_table(){
 // Looks like base address+0x450 is empty, let's put our junk there.
 	DWORD	oldProtect;
 	BYTE *jump_table=get_base_address()+0x450;
-	VirtualProtect( jump_table , 8, PAGE_EXECUTE_READWRITE, &oldProtect);
-	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4;
+	VirtualProtect( jump_table , 32, PAGE_EXECUTE_READWRITE, &oldProtect);
+	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4; // base+0x450
 	jump_table+=8;
-	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4;
+	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x458
 	jump_table+=8;
-	*(unsigned long long *)jump_table=(unsigned long long)easy_kill_codecave+4;
-	VirtualProtect( jump_table , 8, oldProtect, &oldProtect);
+	*(unsigned long long *)jump_table=(unsigned long long)easy_kill_codecave+4; // base+0x460
+	jump_table+=8;
+	*(unsigned long long *)jump_table=(unsigned long long)move_clock_codecave+0x15; // base+0x468; 0x15 is because there is a local float
+	VirtualProtect( jump_table , 32, oldProtect, &oldProtect);
 }
 
 
@@ -74,6 +76,10 @@ DWORD WINAPI dll_thread(LPVOID param)
 				cheat_status[LETS_RUN]=!cheat_status[LETS_RUN];
 				perform_action(LETS_RUN, cheat_status[LETS_RUN]);
 			}
+		}
+		if(GetAsyncKeyState(VK_NUMPAD8) ){
+			cheat_status[LETS_TICK]=!cheat_status[LETS_TICK];
+			perform_action(LETS_TICK, cheat_status[LETS_TICK]);
 		}
 		Sleep(100);
 	}

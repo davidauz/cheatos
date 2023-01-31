@@ -75,6 +75,18 @@ __asm__(
 );
 }
 
+void move_clock_codecave (){
+	float l_TICK=10;
+__asm__(
+	"addss  %0,%%xmm0;"
+	"movss  %%xmm0,0xe0(%%rcx);"
+	"comiss %%xmm1,%%xmm0;"
+	"ret;"
+	:
+	: "m" (l_TICK)
+);
+}
+
 void super_speed_codecave(){
 __asm__(
 	"movss  0x1c(%%rsi),%%xmm6;"	//	put rsi+0x1c in xmm6 (original instruction)

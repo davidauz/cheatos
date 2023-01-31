@@ -10,11 +10,13 @@ enum cheats
 ,	ZERO_WEIGHT	//	5
 ,	LETS_FLY	//	6
 ,	LETS_RUN	//	7
+,	LETS_TICK	//	8
 };
 
 void flying_codecave();
 void super_speed_codecave();
 void easy_kill_codecave();
+void move_clock_codecave();
 
 static struct cheat_definition {
 	char		*cheat_prompt;
@@ -55,13 +57,12 @@ static struct cheat_definition {
 	{	"Easy kill (numpad 4)"
 	,	"\xf3\x0f\x59\x53\x20"	//	mulss   xmm2,dword ptr [rbx+20h] (5 bytes)
 		"\xf3\x0f\x59\xd0"	//	mulss   xmm2,xmm0 (4 bytes, tot 9 bytes)
-	,	"\xFF\x15\xA6\x96\x9A\xFF" // call qword ptr [GenerationZero_F+0x460] (6 bytes)
+	,	"\xFF\x15\xA5\x96\x9A\xFF" // call qword ptr [GenerationZero_F+0x460] (6 bytes) (0x450+0x10)
 		"\x90\x90\x90"		//	nop nop nop (3 bytes)
 	,	0x656DB4 // GenerationZero_F+0x656DB4
 	,	9
 	}
-// p /x 0x656db4-0x450+5-16 = 0x656959
-// p /x 0XFFFFFFFF-0x656959 = 0xFF9A96A6
+// p /x 0XFFFFFFFF-(0x656DB4-0x450+6-0x10) = 0xFF9A96A5
 ,	[ZERO_WEIGHT]=
 	{	"Zero Weight (numpad 5)"
 	,	"\x0F\x57\xC0\xF3\x48\x0F\x2A\xC3" // xorps   xmm0,xmm0 - cvtsi2ss xmm0,rbx
@@ -71,31 +72,43 @@ static struct cheat_definition {
 	}
 ,	[LETS_FLY]=
 	{	"Flying (numpad 6)"
-	,	"\x0F\x29\x7F\x40" // movaps  xmmword ptr [rdi+40h],xmm7 (movaps %xmm7,0x40(%rdi))
-		"\x0F\x29\x77\x50" // movaps  xmmword ptr [rdi+50h],xmm6 (movaps %xmm6,0x50(%rdi))
-	,	"\xFF\x15\x55\x0B\x84\xFE" // call    qword ptr [GenerationZero_F+0x450] ( call   *-0xFE840b55(%rip) )
+	,	"\x0F\x29\x7F\x40" // movaps  xmmword ptr [rdi+40h],xmm7 (movaps %xmm7,0x40(%rdi), 4 bytes)
+		"\x0F\x29\x77\x50" // movaps  xmmword ptr [rdi+50h],xmm6 (movaps %xmm6,0x50(%rdi), 4 bytes)
+	,	"\xFF\x15\x55\x0B\x84\xFE" // call    qword ptr [GenerationZero_F+0x450] ( call   *-0xFE840b55(%rip), 6 bytes)
 		"\x90\x90" // nop nop (and even two bytes to spare)
 // Here RIP is GenerationZero_F+0x17BF8F5
-// Jump table is at GenerationZero_F+0x450; it is written there by init_jump_table() in dll_injection.c
-// Jump table relative to RIP is 0x17BF8F5-0x450+5 = 0x17BF4AA (+5 because RIP points to next instruction)
-// But it is negative: 0XFFFFFFFF-0x17BF4AA = 0xFE840B55
+// Jump table is at GenerationZero_F+0x450; it is filled by init_jump_table() in dll_injection.c
+// Jump table address relative to RIP is 0x17BF8F5-0x450+5 = 0x17BF4AA (+5 because RIP points to next instruction)
+// But it has to be negative: 0XFFFFFFFF-0x17BF4AA = 0xFE840B55
 // So up here is \xFF\x15 (call qword ptr) \x55\x0B\x84\xFE (address location)
-	,	0x17bf8f5
-	,	8
+// in short: p /x 0XFFFFFFFF-(0x17BF8F5-0x450+5) = 0xFE840B55
+	,	0x17BF8F5
+	,	8 // total 8 bytes
 	}
 ,	[LETS_RUN]=
 	{	"Running (numpad 7)"
 	,	"\xf3\x0f\x10\x76\x1c"	// movss  0x1c(%rsi),%xmm6 (5 bytes)
 		"\xf3\x0f\x5c\x76\x18"	// subss  0x18(%rsi),%xmm6 (5 bytes)
 		"\xf3\x41\x0f\x59\xf6"	//  mulss  %xmm14,%xmm6 (5 bytes, tot 15 bytes)
-	,	"\xFF\x15\x3a\xf7\xa1\xff" // call    qword ptr [GenerationZero_F+0x458] ( call   *-0xffa1f72a(%rip) , 6 bytes)
+	,	"\xFF\x15\x39\xf7\xa1\xff" // call    qword ptr [GenerationZero_F+0x458] ( call   *-0xFFA1F73A(%rip) , 6 bytes)
 		"\x90\x90\x90\x90" // nop nop nop nop (4 bytes)
 		"\x90\x90\x90\x90\x90" // nop nop nop nop nop (5 bytes. total 15)
-// p /x 0x5e0d18-0x450+5-8 = 0x005e08c5 (+5 because RIP points to next instruction, -8 because it is the second address in the table)
-// But negative: p /x 0XFFFFFFFF-0x5e08c5 = 0xffa1f73a
+// p /x 0XFFFFFFFF-(0x5E0D18-0x450+6-8) = 0xffa1f739
 	,	0x5e0d18 // GenerationZero_F+0x5e0d18
 	,	15
+	}
+,	[LETS_TICK]=
+	{	"Move clock (Numpad 8)"
+	,	"\x0F\x2F\xC1"	//	comiss %xmm1,%xmm0 (3 bytes)
+		"\xF3\x0F\x11\x81\xE0\x00\x00\x00"	//	movss  %xmm0,0xe0(%rcx) (8 bytes)
+	,	"\xFF\x15\xff\xbe\xc0\xff" // call    qword ptr [GenerationZero_F+0x468] (6 bytes)
+		"\x90\x90\x90\x90\x90" // nop nop nop nop nop (5 bytes)
+//(gdb) p /x0xFFFFFFFF-( 0x3F4564-0x450+4-0x18 )
+//$2 = 0xffc0beff
+	,	0x3F4564 // GenerationZero_F+0x3f4564
+	,	11 // tot 11 bytes
 	}
 };
 
 #endif
+
