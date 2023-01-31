@@ -1,9 +1,11 @@
 # cheatos
 Simple game cheater for the awesome game Generation Zero.
 
-Written in pure C, it works on v16.08.2022 and maybe other versions as well.
+Written in pure C, it works on V.2309068 (2022-08-16) and maybe other versions as well.
 
 There is no interface; it injects into the running process and then waits for numpad keystrokes.
+
+it showcases some techniques like dll injection, codecaves, inline assembly etc.
 
 #Numpad 1: Infinite ammo
 
