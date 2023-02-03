@@ -20,6 +20,7 @@ DWORD g_process_id=0;
 float	g_y_acceleration
 ,	g_speed=40
 ,	g_PAIN=50
+,	l_TICK=0.01
 ;
 
 
@@ -75,8 +76,15 @@ __asm__(
 );
 }
 
+void increase_time_gap(){
+l_TICK+=0.01;
+	file_log( "%s:%d TICK now `%f`", __FILE__, __LINE__, l_TICK );
+}
+void reset_time_gap() {
+l_TICK=0.01;
+	file_log( "%s:%d TICK now `%f`", __FILE__, __LINE__, l_TICK );
+}
 void move_clock_codecave (){
-	float l_TICK=10;
 __asm__(
 	"addss  %0,%%xmm0;"
 	"movss  %%xmm0,0xe0(%%rcx);"

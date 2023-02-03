@@ -14,9 +14,13 @@ void	init_jump_table();
 void	reset_acceleration_value();
 void	reset_speed();
 void	reset_pain();
+void	reset_time_gap();
 
 void	increase_acceleration_value();
 void	increase_speed();
 void	increase_pain();
+void	increase_time_gap();
+
+
 
 #endif

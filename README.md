@@ -7,6 +7,8 @@ There is no interface; it injects into the running process and then waits for nu
 
 it showcases some techniques like dll injection, codecaves, inline assembly etc.
 
+#Numpad 0: exit and unload cheat thread
+
 #Numpad 1: Infinite ammo
 
 #Numpad 2: Infinite life
@@ -17,6 +19,8 @@ it showcases some techniques like dll injection, codecaves, inline assembly etc.
 
 #Numpad 5: Zero weight
 
-#Numpad 6: Fly like a bird
+#Numpad 6: Fly like a superhero
 
 #Numpad 7: Run FAST
+
+#Numpad 8: move clock (I don't like nights)

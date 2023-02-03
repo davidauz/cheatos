@@ -57,12 +57,18 @@ static struct cheat_definition {
 	{	"Easy kill (numpad 4)"
 	,	"\xf3\x0f\x59\x53\x20"	//	mulss   xmm2,dword ptr [rbx+20h] (5 bytes)
 		"\xf3\x0f\x59\xd0"	//	mulss   xmm2,xmm0 (4 bytes, tot 9 bytes)
-	,	"\xFF\x15\xA5\x96\x9A\xFF" // call qword ptr [GenerationZero_F+0x460] (6 bytes) (0x450+0x10)
+	,	"\xFF\x15\xA6\x96\x9A\xFF" // call qword ptr [GenerationZero_F+0x460] (6 bytes) (0x450+0x10)
 		"\x90\x90\x90"		//	nop nop nop (3 bytes)
 	,	0x656DB4 // GenerationZero_F+0x656DB4
 	,	9
 	}
-// p /x 0XFFFFFFFF-(0x656DB4-0x450+6-0x10) = 0xFF9A96A5
+//  p /x 0XFFFFFFFF-(0x656DB4-0x450+5-0x10) =  0xff9a96a6
+//           |            |      |  |   |
+//           |            |      |  |   +- offset in jump table
+//           |            |      |  +- next instruction is 5 bytes down
+//           |            |      +- start of jump table
+//           |            +- target relative offset
+//           +- for negative value
 ,	[ZERO_WEIGHT]=
 	{	"Zero Weight (numpad 5)"
 	,	"\x0F\x57\xC0\xF3\x48\x0F\x2A\xC3" // xorps   xmm0,xmm0 - cvtsi2ss xmm0,rbx
@@ -90,10 +96,10 @@ static struct cheat_definition {
 	,	"\xf3\x0f\x10\x76\x1c"	// movss  0x1c(%rsi),%xmm6 (5 bytes)
 		"\xf3\x0f\x5c\x76\x18"	// subss  0x18(%rsi),%xmm6 (5 bytes)
 		"\xf3\x41\x0f\x59\xf6"	//  mulss  %xmm14,%xmm6 (5 bytes, tot 15 bytes)
-	,	"\xFF\x15\x39\xf7\xa1\xff" // call    qword ptr [GenerationZero_F+0x458] ( call   *-0xFFA1F73A(%rip) , 6 bytes)
+	,	"\xFF\x15\x3a\xf7\xa1\xff" // call    qword ptr [GenerationZero_F+0x458] ( call   *-0xFFA1F73A(%rip) , 6 bytes)
 		"\x90\x90\x90\x90" // nop nop nop nop (4 bytes)
 		"\x90\x90\x90\x90\x90" // nop nop nop nop nop (5 bytes. total 15)
-// p /x 0XFFFFFFFF-(0x5E0D18-0x450+6-8) = 0xffa1f739
+// p /x 0XFFFFFFFF-(0x5E0D18-0x450+5-8) = 0xFFA1F73A
 	,	0x5e0d18 // GenerationZero_F+0x5e0d18
 	,	15
 	}
@@ -101,10 +107,10 @@ static struct cheat_definition {
 	{	"Move clock (Numpad 8)"
 	,	"\x0F\x2F\xC1"	//	comiss %xmm1,%xmm0 (3 bytes)
 		"\xF3\x0F\x11\x81\xE0\x00\x00\x00"	//	movss  %xmm0,0xe0(%rcx) (8 bytes)
-	,	"\xFF\x15\xff\xbe\xc0\xff" // call    qword ptr [GenerationZero_F+0x468] (6 bytes)
+	,	"\xFF\x15\xfe\xbe\xc0\xff" // call    qword ptr [GenerationZero_F+0x468] (6 bytes)
 		"\x90\x90\x90\x90\x90" // nop nop nop nop nop (5 bytes)
-//(gdb) p /x0xFFFFFFFF-( 0x3F4564-0x450+4-0x18 )
-//$2 = 0xffc0beff
+//(gdb) p /x0xFFFFFFFF-( 0x3F4564-0x450+5-0x18 )
+//= 0xffc0befe
 	,	0x3F4564 // GenerationZero_F+0x3f4564
 	,	11 // tot 11 bytes
 	}
