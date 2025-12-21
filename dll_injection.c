@@ -4,14 +4,17 @@
 #include "logic.h"
 
 HINSTANCE g_dll_handle=NULL;
+LPVOID g_pSharedMem = NULL;
+HANDLE g_hMapFile = NULL;
+WCHAR g_log_file_name[MAX_PATH]={0};
 
 void init_jump_table(){
 // Certain hacks need space to store the address to jump to.
-// Looks like base address+0x450 is empty, let's put our junk there.
+// Looks like base address+0x450 is empty; let's put our junk there.
 	DWORD	oldProtect;
 	BYTE *jump_table=get_base_address()+0x450;
 	VirtualProtect( jump_table , 32, PAGE_EXECUTE_READWRITE, &oldProtect);
-	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4; // base+0x450
+	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4; // base+0x450. The '+4' is to skip the C function prolog
 	jump_table+=8;
 	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x458
 	jump_table+=8;
@@ -19,6 +22,11 @@ void init_jump_table(){
 	jump_table+=8;
 	*(unsigned long long *)jump_table=(unsigned long long)move_clock_codecave+4; // base+0x468
 	VirtualProtect( jump_table , 32, oldProtect, &oldProtect);
+//The jump table now sits at base address+0x450. Its contents are:
+// base+0x450 pointer to asm function flying_codecave
+// base+0x458 super_speed_codecave
+// base+0x460 easy_kill_codecave
+// base+0x468 move_clock_codecave
 }
 
 
@@ -104,23 +112,70 @@ DWORD WINAPI dll_thread(LPVOID param)
 	return 0;
 }
 
+BOOL ReadParametersFromSharedMemory() {
+	g_hMapFile = OpenFileMapping
+	(	FILE_MAP_READ
+	,	FALSE
+	,	"Global\\MyDLLParams"
+	);
+
+	if (g_hMapFile) {
+		g_pSharedMem = MapViewOfFile
+		(	g_hMapFile
+		,	FILE_MAP_READ
+		,	0
+		,	0
+		,	0
+		);
+
+		if (g_pSharedMem) {
+			DLL_PARAMS* params = (DLL_PARAMS*)g_pSharedMem;
+			wcscpy(g_log_file_name, params->log_file_path);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+
 BOOL WINAPI DllMain
 (	HINSTANCE hinstDLL // handle to DLL module
 ,	DWORD fdwReason    // reason for calling function
 ,	LPVOID lpvReserved // reserved
 )
 {
-	if( DLL_PROCESS_ATTACH == fdwReason ) { 
-		HANDLE h = CreateThread
-		(	(LPSECURITY_ATTRIBUTES)0		// [in, optional]  lpThreadAttributes
-		,	(SIZE_T)0				// [in] dwStackSize
-		,	(LPTHREAD_START_ROUTINE)dll_thread	// [in] lpStartAddress
-		,	(HINSTANCE)hinstDLL			// [in, optional]  __drv_aliasesMem LPVOID lpParameter
-		,	(DWORD)0				// [in]            DWORD                   dwCreationFlags
-		,	(LPDWORD)0				// [out, optional] LPDWORD                 lpThreadId
-		);
-	}
-	g_dll_handle=hinstDLL;
-	return TRUE;  // Successful DLL_PROCESS_ATTACH
+	switch(fdwReason) {
+		case DLL_PROCESS_ATTACH:
+			g_dll_handle=hinstDLL;
+			if(!ReadParametersFromSharedMemory())
+				wcscpy(L"c:\\log.txt", g_log_file_name); // default
+			
+			HANDLE h = CreateThread
+			(	(LPSECURITY_ATTRIBUTES)0		// [in, optional]  lpThreadAttributes
+			,	(SIZE_T)0				// [in] dwStackSize
+			,	(LPTHREAD_START_ROUTINE)dll_thread	// [in] lpStartAddress
+			,	(HINSTANCE)hinstDLL			// [in, optional]  __drv_aliasesMem LPVOID lpParameter
+			,	(DWORD)0				// [in]            DWORD                   dwCreationFlags
+			,	(LPDWORD)0				// [out, optional] LPDWORD                 lpThreadId
+			);
+			if(h)
+				CloseHandle(h);
+			return TRUE;  // Successful DLL_PROCESS_ATTACH
+		break;
+
+
+		case DLL_PROCESS_DETACH: // Cleanup
+			if (g_pSharedMem) {
+				UnmapViewOfFile(g_pSharedMem);
+				g_pSharedMem = NULL;
+			}
+			if (g_hMapFile) {
+				CloseHandle(g_hMapFile);
+				g_hMapFile = NULL;
+			}
+			return TRUE;  // Successful DLL_PROCESS_DETACH
+		break;
+		}
+	return TRUE;
 }
 

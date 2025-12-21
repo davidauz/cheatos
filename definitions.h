@@ -1,6 +1,12 @@
 #ifndef DEFS_H_
 #define DEFS_H_
 
+#define ERROR_VALUE      255
+
+extern WCHAR g_log_file_name[MAX_PATH];
+
+void prepare_shared_memory();
+
 enum cheats
 {	INFINITE_AMMO=0
 ,	INFINITE_LIFE	//	1
@@ -105,14 +111,17 @@ static struct cheat_definition {
 	}
 ,	[LETS_TICK]=
 	{	"Move clock (Numpad 8)"
-	,	"\x0F\x2F\xC1"	//	comiss %xmm1,%xmm0 (3 bytes)
-		"\xF3\x0F\x11\x81\xE0\x00\x00\x00"	//	movss  %xmm0,0xe0(%rcx) (8 bytes)
-	,	"\xFF\x15\xfe\xbe\xc0\xff" // call    qword ptr [GenerationZero_F+0x468] (6 bytes)
-		"\x90\x90\x90\x90\x90" // nop nop nop nop nop (5 bytes)
-//(gdb) p /x0xFFFFFFFF-( 0x3F4564-0x450+5-0x18 )
-//= 0xffc0befe
-	,	0x3F4564 // GenerationZero_F+0x3f4564
-	,	11 // tot 11 bytes
+	,	"\x0F\x2F\xC1"				// comiss %xmm1,%xmm0 (3 bytes) (compare xmm0 to xmm1)
+		"\xF3\x0F\x11\x81\xE0\x00\x00\x00"	// movss  %xmm0,0xe0(%rcx) (8 bytes)
+							// move scalar single-precision floating-point
+							// Source: Lower 32 bits of XMM0 register
+							// Destination: Memory at address RCX + 0xE0 (224 decimal offset)		
+	,	"\xFF\x15\xfe\xbe\xc0\xff"		// call qword ptr [GenerationZero_F+0x468] (6 bytes)
+		"\x90\x90\x90\x90\x90"			// nop nop nop nop nop (5 bytes)
+							//(gdb) p /x0xFFFFFFFF-( 0x3F4564-0x450+5-0x18 )
+							//= 0xffc0befe
+	,	0x3F4564				// GenerationZero_F+0x3f4564
+	,	11					// tot 11 bytes
 	}
 };
 

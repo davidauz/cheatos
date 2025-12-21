@@ -13,7 +13,8 @@
 #include "sounds\up.c"
 
 #define UNINITIALIZED 0xFFFFFFFF
-#define TARGET_EXE "GenerationZero_F.exe"
+// #define TARGET_EXE "GenerationZero_F.exe"
+#define TARGET_EXE "Notepad.exe" // TESTS
 
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;
@@ -26,7 +27,6 @@ float	g_y_acceleration
 
 int file_log(char* format, ...){
 	char buf[255]
-	,	*filename="c:\\log.txt" // this should be passed as an option
 	;
 	DWORD	dwBytesWritten;
 	va_list argptr;
@@ -35,8 +35,8 @@ int file_log(char* format, ...){
 	strcat(buf, "\n");
 	va_end(argptr);
 	HANDLE report_file_handle;
-	report_file_handle = CreateFile
-	(	filename	// file to write
+	report_file_handle = CreateFileW
+	(	g_log_file_name	// file to write
 	,	FILE_APPEND_DATA
 	,	0		// do not share
 	,	NULL		// default security
@@ -65,15 +65,20 @@ void increase_pain(){
 	g_PAIN+=10;
 	file_log( "%s:%d pain now `%f`", __FILE__, __LINE__, g_PAIN );
 }
+
+// GCC-style inline assembly syntax breakdown
 void easy_kill_codecave(){
 __asm__(
-	"movss  %0,%%xmm2;"
+	"movss  %0,%%xmm2;"	// %0 is replaced with the memory reference to g_PAIN
 	"mulss  0x20(%%rbx),%%xmm2;"
 	"mulss  %%xmm0,%%xmm2;"
 	"ret;"
-	:
-	: "m" (g_PAIN)
+	:			// No output operands (empty after first colon)
+	: "m" (g_PAIN)		// Input operand: g_PAIN is in memory
 );
+//      |  |     └─── C variable/expression
+//      |  └───────── Constraint ("m" = 'memory operand')
+//      └──────────── Colon separating assembly template from inputs
 }
 
 void increase_time_gap(){
@@ -218,11 +223,11 @@ BYTE *get_base_address(){
 }
 
 
-
 int perform_dll_injection() {
 	char	dll_name[] = "cheatos.dll"
 	,	dll_path[MAX_PATH]={0}
 	;
+
 	SIZE_T  NumberOfBytesWritten;
 	BOOL	b_res;
 	if(0 == GetFullPathNameA
@@ -232,7 +237,7 @@ int perform_dll_injection() {
 	,	NULL // [out] LPSTR  *lpFilePart
 	))
 		return file_log("Error in GetFullPathNameA")?FALSE:FALSE;
-	int	n_path_size=1+strlen(dll_path);
+	int	n_dll_path_size=1+strlen(dll_path);
 	HANDLE hProcess = OpenProcess
 	(	STANDARD_RIGHTS_REQUIRED | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE
 	,	FALSE
@@ -243,7 +248,7 @@ int perform_dll_injection() {
 	LPVOID p_dll_memory= VirtualAllocEx
 	(	hProcess // [in]           HANDLE hProcess,
 	,	NULL // [in, optional] LPVOID lpAddress,
-	,	n_path_size // [in]           SIZE_T dwSize,
+	,	n_dll_path_size // [in]           SIZE_T dwSize,
 	,	MEM_COMMIT|MEM_RESERVE // [in]           DWORD  flAllocationType,
 	,	PAGE_READWRITE // [in]           DWORD  flProtect
 	);
@@ -251,14 +256,14 @@ int perform_dll_injection() {
 	(	hProcess //  [in]  HANDLE  hProcess
 	,	p_dll_memory // [in]  LPVOID  lpBaseAddress
 	,	dll_path // [in]  LPCVOID lpBuffer
-	,	n_path_size //[in]  SIZE_T  nSize
+	,	n_dll_path_size //[in]  SIZE_T  nSize
 	,	&NumberOfBytesWritten // [out] SIZE_T *lpNumberOfBytesWritten
 	);
 	if(0==b_res) {
 		CloseHandle(hProcess);
 		return file_log("Error writing memory")?FALSE:FALSE;
 	}
-	if(NumberOfBytesWritten != n_path_size) {
+	if(NumberOfBytesWritten != n_dll_path_size) {
 		CloseHandle(hProcess);
 		return file_log("Size mismatch reading memory")?FALSE:FALSE;
 	}
@@ -277,7 +282,7 @@ int perform_dll_injection() {
 	b_res=VirtualFreeEx
 	(	hProcess // [in] HANDLE hProcess,
 	,	dll_path // [in] LPVOID lpAddress,
-	,	n_path_size // [in] SIZE_T dwSize,
+	,	n_dll_path_size // [in] SIZE_T dwSize,
 	,	MEM_RELEASE // [in] DWORD  dwFreeType
 	);
 
@@ -377,14 +382,13 @@ int perform_action
 
 int wait_for_process_and_inject()
 {
-
 	int n_process_id=0;
 
 	do {
 		n_process_id=find_process_id();
 		if(0!=n_process_id)
 			break;
-		file_log("L %d: waiting", __LINE__);
+		file_log("L %d: waiting for '%s'", __LINE__, TARGET_EXE);
 		Sleep(500);
 	} while(0==n_process_id);
 	g_process_id=n_process_id;

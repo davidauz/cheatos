@@ -22,7 +22,7 @@ dll_injection.o: $(headers)
 logic.o: $(headers)
 
 clean:
-	del *.exe
-	del *.dll
-	del *.o
+	rm *.exe
+	rm *.dll
+	rm *.o
 

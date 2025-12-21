@@ -22,5 +22,12 @@ void	increase_pain();
 void	increase_time_gap();
 
 
+typedef struct {
+	WCHAR log_file_path[MAX_PATH];
+	DWORD injector_pid;
+	DWORD magic_number;  // For validation
+} DLL_PARAMS; // we only have one parameter
+
+#define PARAM_MAGIC 0xCED1FAB0
 
 #endif
