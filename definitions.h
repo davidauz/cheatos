@@ -17,6 +17,7 @@ enum cheats
 ,	LETS_FLY	//	6
 ,	LETS_RUN	//	7
 ,	LETS_TICK	//	8
+,	LAST_ENTRY	//	9
 };
 
 void flying_codecave();
@@ -123,6 +124,14 @@ static struct cheat_definition {
 	,	0x3F4564				// GenerationZero_F+0x3f4564
 	,	11					// tot 11 bytes
 	}
+,	[LAST_ENTRY]=
+	{	"Last entry"
+	,	"\x00\x00\x00"
+	,	"\x00\x00\x00"
+	,	0x0
+	,	3
+	}
+
 };
 
 #endif

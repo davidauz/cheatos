@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "definitions.h"
 #include "logic.h"
+#include "memscan.h"
 
 HINSTANCE g_dll_handle=NULL;
 LPVOID g_pSharedMem = NULL;
@@ -29,12 +30,16 @@ void init_jump_table(){
 // base+0x468 move_clock_codecave
 }
 
+void scan_aobs(){
+	ScanCurrentProcessMemory();
+}
 
 DWORD WINAPI dll_thread(LPVOID param)
 {
 	int cheat_status[10]={0};
 	init_jump_table();
 	reset_acceleration_value();
+	scan_aobs();
 	while(true){
 		if(GetAsyncKeyState(VK_NUMPAD0 //0x30 	is 0 key
 		) ){

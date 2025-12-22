@@ -70,7 +70,7 @@ int show_error_exit(char* format, ...){
 
 
 int Usage(){
-	return show_error_exit("%s:%d\nUsage\n\n"
+	return file_log("%s:%d\nUsage\n\n"
 "-h: this help\n"
 "-f <log file>: log file name (default '%s')\n"
 "-r: delete log file contents at startup\n"
@@ -93,6 +93,7 @@ int WINAPI WinMain (	HINSTANCE hInstance
 	LPWSTR cmdLine = GetCommandLineW();
 	argv = CommandLineToArgvW(cmdLine, &argc);
 	int idx=1; // 0 is the executable
+	wcscpy(g_log_file_name, L"c:\\LOG.txt"); // default
 
 	while (idx < argc ) {
 		if(!lstrcmpiW(L"-h", argv[idx]))

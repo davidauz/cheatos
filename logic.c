@@ -13,8 +13,6 @@
 #include "sounds\up.c"
 
 #define UNINITIALIZED 0xFFFFFFFF
-// #define TARGET_EXE "GenerationZero_F.exe"
-#define TARGET_EXE "Notepad.exe" // TESTS
 
 BYTE * g_baseAddress=0;
 DWORD g_process_id=0;

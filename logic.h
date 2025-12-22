@@ -22,6 +22,9 @@ void	increase_pain();
 void	increase_time_gap();
 
 
+#define TARGET_EXE "GenerationZero_F.exe"
+// #define TARGET_EXE "Notepad.exe" // TESTS
+
 typedef struct {
 	WCHAR log_file_path[MAX_PATH];
 	DWORD injector_pid;
