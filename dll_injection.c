@@ -40,6 +40,7 @@ DWORD WINAPI dll_thread(LPVOID param)
 	init_jump_table();
 	reset_acceleration_value();
 	scan_aobs();
+	file_log("%s:%d Finito aobs", __FILE__, __LINE__);
 	while(true){
 		if(GetAsyncKeyState(VK_NUMPAD0 //0x30 	is 0 key
 		) ){

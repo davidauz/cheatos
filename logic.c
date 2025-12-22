@@ -89,9 +89,9 @@ l_TICK=0.01;
 }
 void move_clock_codecave (){
 __asm__(
-	"addss  %0,%%xmm0;"
-	"movss  %%xmm0,0xe0(%%rcx);"
-	"comiss %%xmm1,%%xmm0;"
+	"addss  %0,%%xmm0;" // Add Scalar Single-precision: xmm0 = xmm0 + parameter below
+	"movss  %%xmm0,0xe0(%%rcx);" // Move Scalar Single-precision: put contents of xmm0 in memory location at rcx + 0xe0
+	"comiss %%xmm1,%%xmm0;" // Compare Scalar Ordered Single-precision compare xmm0 and xmm1
 	"ret;"
 	:
 	: "m" (l_TICK)

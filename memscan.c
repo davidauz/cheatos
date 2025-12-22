@@ -33,7 +33,8 @@ void ScanMemoryRange
     for (SIZE_T i = 0; i <= max; ++i) {
         if (base[i] == sequence[0]) {
             if (memcmp(base + i, sequence, sequence_length) == 0) {
-		file_log("%s:%d FOUND", __FILE__, __LINE__);
+		file_log("%s:%d FOUND at 0x%p", __FILE__, __LINE__, base+i);
+		return;
             }
         }
     }
@@ -57,7 +58,13 @@ void ScanCurrentProcessMemory() {
 				calculated_end= (BYTE*)me32.modBaseAddr + me32.modBaseSize - 1;
 				file_log("%s:%d end: 0x%p ", __FILE__, __LINE__, calculated_end);
 				file_log("%s:%d Path: %s ", __FILE__, __LINE__, me32.szExePath);
-				ScanMemoryRange( me32.modBaseAddr, me32.modBaseSize, definitions[LETS_TICK].original_code, definitions[LETS_TICK].cheat_num_bytes);
+				ScanMemoryRange
+				(	me32.modBaseAddr
+				,	me32.modBaseSize
+				,	definitions[LETS_TICK].original_code
+				,	definitions[LETS_TICK].cheat_num_bytes
+				);
+				file_log("%s:%d 1", __FILE__, __LINE__);
 			}
 		} while (Module32Next(hSnapshot, &me32));
 	}
