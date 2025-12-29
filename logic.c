@@ -9,17 +9,19 @@
 
 #include "logic.h"
 #include "definitions.h"
+#include "memscan.h"
 #include "sounds\down.c"
 #include "sounds\up.c"
 
 #define UNINITIALIZED 0xFFFFFFFF
 
 BYTE * g_baseAddress=0;
+SIZE_T g_module_size=0;
 DWORD g_process_id=0;
 float	g_y_acceleration
 ,	g_speed=40
 ,	g_PAIN=50
-,	l_TICK=0.01
+,	l_TICK=0;
 ;
 
 
@@ -57,11 +59,11 @@ int file_log(char* format, ...){
 
 void reset_pain(){
 	g_PAIN=0;
-	file_log( "%s:%d pain now `%f`", __FILE__, __LINE__, g_PAIN );
+	file_log( "%s : %d pain now `%f`", __FILE__, __LINE__, g_PAIN );
 }
 void increase_pain(){
 	g_PAIN+=10;
-	file_log( "%s:%d pain now `%f`", __FILE__, __LINE__, g_PAIN );
+	file_log( "%s : %d pain now `%f`", __FILE__, __LINE__, g_PAIN );
 }
 
 // GCC-style inline assembly syntax breakdown
@@ -81,17 +83,18 @@ __asm__(
 
 void increase_time_gap(){
 l_TICK+=0.01;
-	file_log( "%s:%d TICK now `%f`", __FILE__, __LINE__, l_TICK );
+	file_log( "%s : %d TICK now `%f`", __FILE__, __LINE__, l_TICK );
 }
 void reset_time_gap() {
-l_TICK=0.01;
-	file_log( "%s:%d TICK now `%f`", __FILE__, __LINE__, l_TICK );
+l_TICK=0;
+	file_log( "%s : %d TICK now `%f`", __FILE__, __LINE__, l_TICK );
 }
 void move_clock_codecave (){
 __asm__(
+	"movaps %%xmm6,%%xmm1;"
+//"mulss  0xec(%%ebx),%%xmm1;"
 	"addss  %0,%%xmm0;" // Add Scalar Single-precision: xmm0 = xmm0 + parameter below
-	"movss  %%xmm0,0xe0(%%rcx);" // Move Scalar Single-precision: put contents of xmm0 in memory location at rcx + 0xe0
-	"comiss %%xmm1,%%xmm0;" // Compare Scalar Ordered Single-precision compare xmm0 and xmm1
+	"addss  %%xmm0,%%xmm1;"
 	"ret;"
 	:
 	: "m" (l_TICK)
@@ -125,57 +128,64 @@ __asm__(
 
 void reset_speed(){
 	g_speed=0;
-	file_log( "%s:%d SPEED now `%f`", __FILE__, __LINE__, g_speed );
+	file_log( "%s : %d SPEED now `%f`", __FILE__, __LINE__, g_speed );
 }
 
 void reset_acceleration_value(){
 	g_y_acceleration=5;
-	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
+	file_log( "%s : %d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
 }
 
 void increase_speed(){
 	g_speed+=10;
-	file_log( "%s:%d SPEED now `%f`", __FILE__, __LINE__, g_speed );
+	file_log( "%s : %d SPEED now `%f`", __FILE__, __LINE__, g_speed );
 }
 
 void increase_acceleration_value(){
 	g_y_acceleration+=10;
-	file_log( "%s:%d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
+	file_log( "%s : %d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
 }
 
 
-BYTE * find_process_base_address(DWORD processID_) 
+void find_process_base_address(DWORD processID_) 
 {
 	HANDLE moduleSnapshotHandle_ = INVALID_HANDLE_VALUE;
-	MODULEENTRY32 moduleEntry_;
+	MODULEENTRY32 me32;
 	DWORD  processBaseAddress_   = UNINITIALIZED;
 
 // Take a snapshot of all the modules in the process
 	moduleSnapshotHandle_ = CreateToolhelp32Snapshot( TH32CS_SNAPMODULE, processID_ );
-	if( moduleSnapshotHandle_ == INVALID_HANDLE_VALUE )
-		return file_log( "Module Snapshot error" ) ? NULL:NULL; // one liner
+	if( moduleSnapshotHandle_ == INVALID_HANDLE_VALUE ){
+		file_log( "Module Snapshot error" );
+		return;
+	}
 
 // structure size
-	moduleEntry_.dwSize = sizeof( MODULEENTRY32 );
+	me32.dwSize = sizeof( MODULEENTRY32 );
 
 // the first module
-	if( !Module32First( moduleSnapshotHandle_, &moduleEntry_ ) ) {
+	if( !Module32First( moduleSnapshotHandle_, &me32 ) ) {
 		CloseHandle( moduleSnapshotHandle_ );    
 		file_log("Error in Module32First");
-		return NULL;
+		return;
 	}
+	
 
 // Find base address
 	while(processBaseAddress_ == UNINITIALIZED) {
 // Find module of the executable
 		do {
-			if( strstr(moduleEntry_.szModule, TARGET_EXE) )
-				return moduleEntry_.modBaseAddr;
-		} while( Module32Next( moduleSnapshotHandle_, &moduleEntry_ ) );
+			if( strstr(me32.szModule, TARGET_EXE) ) {
+				g_baseAddress = me32.modBaseAddr;
+				g_module_size = me32.modBaseSize;
+				return;
+			}
+		} while( Module32Next( moduleSnapshotHandle_, &me32 ) );
 
-		return file_log( "Base address not found" ) ? NULL:NULL;
+		file_log( "Base address not found" );
+		return;
 	}
-	return (file_log( "Total failure" ) ? NULL:NULL);
+	file_log( "Total failure" );
 }
 
 
@@ -200,8 +210,8 @@ int find_process_id(){
 	do{
 		hProcess = OpenProcess( PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID );
 		if(strstr(TARGET_EXE, pe32.szExeFile)) {
-			g_baseAddress = find_process_base_address( pe32.th32ProcessID );
 			g_process_id =  pe32.th32ProcessID;
+			find_process_base_address( g_process_id );
 			file_log("L %d: process id is `%d`", __LINE__, g_process_id);
 			CloseHandle(hProcess);
 			break;
@@ -298,7 +308,7 @@ int perform_action
 (	int cheat_id
 ,	bool on_off
 ) {
-	struct cheat_definition *p_definition=&definitions[cheat_id];
+	struct cheat_definition *p_definition=get_definition(cheat_id);
 	char *snd=sound_UP;
 	if(0==on_off)
 		snd=sound_DOWN;
@@ -309,13 +319,13 @@ int perform_action
 	if(0==g_process_id)
 		return file_log("Error in find_process_id")?FALSE:FALSE;
 
-	unsigned char	*nop_code = p_definition->cheat_code
+	unsigned char	*cheat_code = p_definition->cheat_code
 	,	*original_code = p_definition->original_code
 	,	check_buffer[50]={0}
 	;
-	BYTE	*lp_game_memory_address= 0x0
+	BYTE	*lp_game_memory_address= p_definition->destination_address
 	,	*memory_contents=original_code
-	,	*cheat_contents=nop_code
+	,	*cheat_contents=cheat_code
 	;
 	HANDLE	hProcess = 0;
 	BOOL	b_res;
@@ -327,11 +337,14 @@ int perform_action
 	;
 
 	if(0==on_off) { // ZERO=REMOVE CHEAT.  1=INSTALL CHEAT
-		memory_contents=nop_code;
+		memory_contents=cheat_code;
 		cheat_contents=original_code;
 	}
 
-	lp_game_memory_address= g_baseAddress+p_definition->relative_offset;
+	if(NULL==lp_game_memory_address)
+		return file_log("%s : %d NULL address", __FILE__, __LINE__ );
+
+	file_log("%s : %d destination address is 0x%p", __FILE__, __LINE__, lp_game_memory_address );
 
 	hProcess = OpenProcess
 	(	STANDARD_RIGHTS_REQUIRED | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE
@@ -367,6 +380,7 @@ int perform_action
 		CloseHandle(hProcess);
 		return file_log("Error writing memory")?FALSE:FALSE;
 	}
+	file_log("%s : %d wrote '%d' bytes at '0x%p'", __FILE__, __LINE__, p_definition->cheat_num_bytes, lp_game_memory_address);
 	if(NumberOfBytesWritten != p_definition->cheat_num_bytes) {
 		CloseHandle(hProcess);
 		return file_log("Size mismatch reading memory")?FALSE:FALSE;
@@ -376,6 +390,23 @@ int perform_action
 	return 1;
 }
 
+
+
+void update_codecave_addresses(){
+	BYTE	*base_address=getBaseAddress()
+	,	*jump_table=base_address+0x450
+	,	*where_is_tick_codecave=jump_table+0x18
+	,	*where_is_fly_codecave=jump_table
+	;
+	update_codecave_address
+	(	LETS_TICK
+	,	where_is_tick_codecave
+	);
+	update_codecave_address
+	(	LETS_FLY
+	,	where_is_tick_codecave
+	);
+}
 
 
 int wait_for_process_and_inject()

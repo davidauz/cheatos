@@ -8,7 +8,7 @@
 
 #define CHECK_ARGUMENT \
 if(argc<=(1+idx)) \
-	return show_error_exit("Missing argument after option `%s`\n", argv[idx]);
+	return show_error_exit("Missing argument after option '%s'\n", argv[idx]);
 
 #define OPTION_DELETE_LOG_FILE 0x01
 #define OPTION_LOG_FILE 0x20

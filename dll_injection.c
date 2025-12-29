@@ -13,7 +13,7 @@ void init_jump_table(){
 // Certain hacks need space to store the address to jump to.
 // Looks like base address+0x450 is empty; let's put our junk there.
 	DWORD	oldProtect;
-	BYTE *jump_table=get_base_address()+0x450;
+	BYTE *jump_table=getBaseAddress()+0x450;
 	VirtualProtect( jump_table , 32, PAGE_EXECUTE_READWRITE, &oldProtect);
 	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4; // base+0x450. The '+4' is to skip the C function prolog
 	jump_table+=8;
@@ -30,17 +30,20 @@ void init_jump_table(){
 // base+0x468 move_clock_codecave
 }
 
-void scan_aobs(){
-	ScanCurrentProcessMemory();
-}
 
 DWORD WINAPI dll_thread(LPVOID param)
 {
 	int cheat_status[10]={0};
+	file_log("%s : %d beginning housekeeping", __FILE__, __LINE__);
+	if(0!=query_module_parameters()){
+		return file_log("%s : %d Exiting", __FILE__, __LINE__);
+	}
+
 	init_jump_table();
+	ScanCurrentProcessMemory();
+	update_codecave_addresses();
 	reset_acceleration_value();
-	scan_aobs();
-	file_log("%s:%d Finito aobs", __FILE__, __LINE__);
+	file_log("%s : %d housekeeping finished", __FILE__, __LINE__);
 	while(true){
 		if(GetAsyncKeyState(VK_NUMPAD0 //0x30 	is 0 key
 		) ){

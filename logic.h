@@ -21,6 +21,8 @@ void	increase_speed();
 void	increase_pain();
 void	increase_time_gap();
 
+void update_codecave_addresses();
+
 
 #define TARGET_EXE "GenerationZero_F.exe"
 // #define TARGET_EXE "Notepad.exe" // TESTS
