@@ -18,12 +18,6 @@
 BYTE * g_baseAddress=0;
 SIZE_T g_module_size=0;
 DWORD g_process_id=0;
-float	g_y_acceleration
-,	g_speed=40
-,	g_PAIN=50
-,	l_TICK=0;
-;
-
 
 int file_log(char* format, ...){
 	char buf[255]
@@ -57,94 +51,6 @@ int file_log(char* format, ...){
 	return 0;
 }
 
-void reset_pain(){
-	g_PAIN=0;
-	file_log( "%s : %d pain now `%f`", __FILE__, __LINE__, g_PAIN );
-}
-void increase_pain(){
-	g_PAIN+=10;
-	file_log( "%s : %d pain now `%f`", __FILE__, __LINE__, g_PAIN );
-}
-
-// GCC-style inline assembly syntax breakdown
-void easy_kill_codecave(){
-__asm__(
-	"movss  %0,%%xmm2;"	// %0 is replaced with the memory reference to g_PAIN
-	"mulss  0x20(%%rbx),%%xmm2;"
-	"mulss  %%xmm0,%%xmm2;"
-	"ret;"
-	:			// No output operands (empty after first colon)
-	: "m" (g_PAIN)		// Input operand: g_PAIN is in memory
-);
-//      |  |     └─── C variable/expression
-//      |  └───────── Constraint ("m" = 'memory operand')
-//      └──────────── Colon separating assembly template from inputs
-}
-
-void increase_time_gap(){
-l_TICK+=0.01;
-	file_log( "%s : %d TICK now `%f`", __FILE__, __LINE__, l_TICK );
-}
-void reset_time_gap() {
-l_TICK=0;
-	file_log( "%s : %d TICK now `%f`", __FILE__, __LINE__, l_TICK );
-}
-void move_clock_codecave (){
-__asm__(
-	"movaps %%xmm6,%%xmm1;"
-//"mulss  0xec(%%ebx),%%xmm1;"
-	"addss  %0,%%xmm0;" // Add Scalar Single-precision: xmm0 = xmm0 + parameter below
-	"addss  %%xmm0,%%xmm1;"
-	"ret;"
-	:
-	: "m" (l_TICK)
-);
-}
-
-void super_speed_codecave(){
-__asm__(
-	"movss  0x1c(%%rsi),%%xmm6;"	//	put rsi+0x1c in xmm6 (original instruction)
-	"mulss  %0,%%xmm6;"	//	multiply xmm6 by parameter
-"exit:"
-	"subss  0x18(%%rsi),%%xmm6;"	//	original instruction
-	"mulss  %%xmm14,%%xmm6;"		//	original instruction
-	"ret;"
-	:
-	: "m" (g_speed)
-);
-}
-
-void flying_codecave(){
-__asm__(
-	"movss  0x44(%%rdi),%%xmm2;"	// put rdi+68 in xmm2
-	"addss  %0,%%xmm2;"		// add g_y_acceleration to xmm2
-	"movss  %%xmm2,0x44(%%rdi);"	// result goes to rdi+0x44
-	"movaps %%xmm6,0x50(%%rdi);"	// original instruction
-	"ret;"
-	:
-	: "m" (g_y_acceleration)
-);
-}
-
-void reset_speed(){
-	g_speed=0;
-	file_log( "%s : %d SPEED now `%f`", __FILE__, __LINE__, g_speed );
-}
-
-void reset_acceleration_value(){
-	g_y_acceleration=5;
-	file_log( "%s : %d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
-}
-
-void increase_speed(){
-	g_speed+=10;
-	file_log( "%s : %d SPEED now `%f`", __FILE__, __LINE__, g_speed );
-}
-
-void increase_acceleration_value(){
-	g_y_acceleration+=10;
-	file_log( "%s : %d ACCELERATION now `%f`", __FILE__, __LINE__, g_y_acceleration );
-}
 
 
 void find_process_base_address(DWORD processID_) 
@@ -313,6 +219,7 @@ int perform_action
 	if(0==on_off)
 		snd=sound_DOWN;
 	PlaySound(snd, NULL, SND_MEMORY | SND_ASYNC | SND_NODEFAULT); 
+	file_log("%s : %d cheat id: '%d'", __FILE__, __LINE__, cheat_id );
 
 	if(0==g_process_id)
 		find_process_id();
@@ -388,24 +295,6 @@ int perform_action
 	CloseHandle(hProcess);
 	Sleep(1000);
 	return 1;
-}
-
-
-
-void update_codecave_addresses(){
-	BYTE	*base_address=getBaseAddress()
-	,	*jump_table=base_address+0x450
-	,	*where_is_tick_codecave=jump_table+0x18
-	,	*where_is_fly_codecave=jump_table
-	;
-	update_codecave_address
-	(	LETS_TICK
-	,	where_is_tick_codecave
-	);
-	update_codecave_address
-	(	LETS_FLY
-	,	where_is_tick_codecave
-	);
 }
 
 

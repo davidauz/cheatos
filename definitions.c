@@ -6,17 +6,48 @@
 struct cheat_definition definitions[] =
 {	[INFINITE_AMMO]=
 	{	"Infinite ammo (numpad 1)"
-	,	{0x89, 0x4f, 0x30 } // mov     dword ptr [rdi+30h],ecx (move the amount of available bullets in this place)
+	,	{0x41, 0x2B, 0xC6	// sub eax,r14d (3)
+	,	0x4C, 0x8B, 0x06	// mov r8,[rsi] (3)
+	,	0x85, 0xC0	// test eax,eax (2)
+	,	0x0F, 0x4F, 0xE8	// cmovg ebp,eax (3)
+	,	0x8B, 0xD5	// mov edx,ebp (2)
+	,	0x48, 0x8B, 0xCE	// mov rcx,rsi (3)
+	,	0x41, 0xFF, 0x90, 0xD8, 0x01, 0x00, 0x00}	// call qword ptr [r8+000001D8] (7)
 	,	{ 0x90, 0x90, 0x90 } // nop nop nop
 	,	NULL
 	,	3
+	,	23
+	}
+,	[INFINITE_AMMO_2]=
+	{	"Infinite ammo 2"
+	,	{ 0xE8, 0x03, 0x6B, 0xFA, 0xFF // call GenerationZero_F.exe+7181B0 (tutti NOP)
+	,	0x84, 0xC0 // test al,al
+	,	0x75, 0x0C // jne GenerationZero_F.exe+7716BD
+	,	0x48, 0x8B, 0x06 // mov rax,[rsi]
+	,	0x48, 0x8B, 0xCE // mov rcx,rsi
+	,	0xFF, 0x90, 0x10, 0x02, 0x00, 0x00 // call qword ptr [rax+00000210]
+	,	0x48, 0x8B, 0x5C, 0x24, 0x60} // mov rbx,[rsp+60]
+	,	{ 0x90, 0x90, 0x90, 0x90, 0x90 } // nop nop nop
+	,	NULL
+	,	5
+	,	26
 	}
 ,	[INFINITE_LIFE]=
 	{	"Infinite life (numpad 2)"
-	,	{ 0x2b, 0xd3 } // sub     edx,ebx (subtract damage (ebx) from life value (edx))
-	,	{ 0x90, 0x90 } // nop nop
+	,	{0x40, 0x55 	//	push %rbp 	
+	,	0x56 	//	push %rsi
+	,	0x57 	//	push %rdi 	
+	,	0x41, 0x54 	//	push %r12 	
+	,	0x41, 0x55	//	push %r13 	
+	,	0x41, 0x56	//	push %r14 	
+	,	0x41, 0x57 	//	push %r15 	
+	,	0x48, 0x8d, 0xac, 0x24, 0x80, 0xfe, 0xff, 0xff
+	,	0x48, 0x81, 0xec, 0x80, 0x02, 0x00, 0x00 	//	sub $0xa0,%rsp 	
+	,	0x48, 0xc7, 0x45, 0xc8, 0xfe, 0xff, 0xff, 0xff }	//	movq $0xfffffffffffffffe,-0x1(%rbp) 	
+	,	{ 0xc3, 0x90 } // ret nop
 	,	NULL
 	,	2
+	,	35
 	}	
 ,	[NO_RECHARGE]=
 	{	"" // goes together with infinite ammo
@@ -24,13 +55,18 @@ struct cheat_definition definitions[] =
 	,	{ 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
 	,	NULL
 	,	6
+	,	6
 	}
 ,	[INFINITE_STAMINA]=
 	{	"Infinite stamina (numpad 3)"
-	,	{ 0x74, 0x4d } // je      GenerationZero_F+0x5b777f
+	,	{0x74, 0x45
+	,	0x45, 0x33, 0xC9
+	,	0xC6, 0x44, 0x24, 0x20, 0x00
+	,	0x0F, 0x57, 0xD2 }
 	,	{ 0x90, 0x90 }
 	,	NULL
 	,	2
+	,	13
 	}
 ,	[LETS_KILL]=
 	{	"Easy kill (numpad 4)"
@@ -47,6 +83,7 @@ struct cheat_definition definitions[] =
 // The Next RIP is at 0x7ff96b304d3d + 6 = 0x7ff96b304d43
 	,	NULL
 	,	9
+	,	9
 	}
 //  p /x 0XFFFFFFFF-(0x656DB4-0x450+5-0x10) =  0xff9a96a6
 //           |            |      |  |   |
@@ -57,10 +94,15 @@ struct cheat_definition definitions[] =
 //           +- for negative value
 ,	[ZERO_WEIGHT]=
 	{	"Zero Weight (numpad 5)"
-	,	{ 0x0F, 0x57, 0xC0, 0xF3, 0x48, 0x0F, 0x2A, 0xC3 } // xorps   xmm0,xmm0 - cvtsi2ss xmm0,rbx
-	,	{ 0x0F, 0x57, 0xC0, 0x90, 0x90, 0x90, 0x90, 0x90 } // xorps   xmm0,xmm0, nop
+	,	{0x48, 0x8D, 0x88, 0x38, 0x03, 0x00, 0x00	//	lea rcx,[rax+00000338] (7)
+	,	0xE8, 0xD9, 0x28, 0x00, 0x00	//	call GenerationZero_F.exe+722980 (5)
+	,	0xF3, 0x0F, 0x11, 0x05, 0x59, 0xEA, 0x3A, 0x02	//	movss [GenerationZero_F.exe+2ACEB08],xmm0 (8)HERE WRITING WEIGHT
+	,	0xC6, 0x05, 0xF2, 0x6B, 0x11, 0x02, 0x00}	//	mov byte ptr [GenerationZero_F.exe+2836CA8],00 (7)
+	,	{0x0F, 0x57, 0xC0 // xorps xmm0,xmm0
+	,	0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 } // nop nop nop ..
 	,	NULL
-	,	8
+	,	12
+	,	27
 	}
 ,	[LETS_FLY]=
 	{	"Flying (numpad 6)"
@@ -76,18 +118,17 @@ struct cheat_definition definitions[] =
 // in short: p /x 0XFFFFFFFF-(0x17BF8F5-0x450+5) = 0xFE840B55
 	,	NULL
 	,	8 // total 8 bytes
+	,	8 // total 8 bytes
 	}
 ,	[LETS_RUN]=
 	{	"Running (numpad 7)"
-	,	{ 0xf3, 0x0f, 0x10, 0x76, 0x1c 	// movss  0x1c(%rsi),%xmm6 (5 bytes)
-		, 0xf3, 0x0f, 0x5c, 0x76, 0x18 	// subss  0x18(%rsi),%xmm6 (5 bytes)
-		, 0xf3, 0x41, 0x0f, 0x59, 0xf6 }	//  mulss  %xmm14,%xmm6 (5 bytes, tot 15 bytes)
-	,	{ 0xFF, 0x15, 0x3a, 0xf7, 0xa1, 0xff  // call    qword ptr [GenerationZero_F+0x458] ( call   *-0xFFA1F73A(%rip) , 6 bytes)
-		, 0x90, 0x90, 0x90, 0x90  // nop nop nop nop (4 bytes)
-		, 0x90, 0x90, 0x90, 0x90, 0x90 } // nop nop nop nop nop (5 bytes. total 15)
-// p /x 0XFFFFFFFF-(0x5E0D18-0x450+5-8) = 0xFFA1F73A
+	,	{ 0xf3, 0x41, 0x0f, 0x10, 0x7e, 0x18 // movss  0x18(%r14),%xmm7 (6b)
+		, 0x48, 0x8b, 0x8f, 0xa0, 0x33, 0x00, 0x00 // mov    0x33a0(%rdi),%rcx (7b)
+		, 0xe8, 0x8c, 0xae, 0xb9, 0xff, 0x0f } // call   0x7ff7d24407c0 (6b)
+	,	{ 0xFF, 0x15, 0x3a, 0xf7, 0xa1, 0xff }  // call qword ptr [GenerationZero_F+0x458] ( 6 bytes)
 	,	NULL
-	,	15
+	,	6 // code length
+	,	19 // aob length
 	}
 ,	[LETS_TICK]=
 	{	"Move clock (Numpad 8)"
@@ -98,6 +139,7 @@ struct cheat_definition definitions[] =
 		, 0x90, 0x90, 0x90, 0x90, 0x90 			// nop nop nop nop nop (5 bytes)
 		, 0x90, 0x90, 0x90, 0x90 }			// nop nop nop nop (4 bytes)
 	,	NULL
+	,	15					// tot 15 bytes
 	,	15					// tot 15 bytes
 	}
 ,	[LAST_ENTRY]=
@@ -113,28 +155,4 @@ struct cheat_definition definitions[] =
 struct cheat_definition *get_definition(int cheat_id) {
 	return &definitions[cheat_id];
 }
-
-void update_codecave_address
-(	int def_seq
-,	BYTE *address_in_jump_table
-){
-	BYTE *jump_code=definitions[def_seq].cheat_code // this is 0xFF 0x15
-	,	*game_original_code_address = definitions[def_seq].destination_address // this is the place where the jump happens
-	;
-	if (jump_code[0] != 0xFF || jump_code[1] != 0x15) {
-		file_log("%s : %d not a jump", __FILE__, __LINE__);
-		return;
-	}
-	int64_t displacement = address_in_jump_table - (game_original_code_address + 6);
-	if (displacement < INT32_MIN || displacement > INT32_MAX) {
-		file_log("%s : %d overflow", __FILE__, __LINE__);
-		return;
-	}
-	uint32_t value_32bit = (uint32_t)((int32_t)displacement);
-	jump_code[2] = (value_32bit >> 0) & 0xFF;   // LSB
-	jump_code[3] = (value_32bit >> 8) & 0xFF;
-	jump_code[4] = (value_32bit >> 16) & 0xFF;
-	jump_code[5] = (value_32bit >> 24) & 0xFF;  // MSB
-}
-
 

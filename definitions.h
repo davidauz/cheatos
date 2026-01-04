@@ -9,28 +9,26 @@ void prepare_shared_memory();
 
 enum cheats
 {	INFINITE_AMMO=0
-,	INFINITE_LIFE	//	1
-,	NO_RECHARGE	//	2
-,	INFINITE_STAMINA//	3
-,	LETS_KILL	//	4
-,	ZERO_WEIGHT	//	5
-,	LETS_FLY	//	6
-,	LETS_RUN	//	7
-,	LETS_TICK	//	8
-,	LAST_ENTRY	//	9
+,	INFINITE_AMMO_2
+,	INFINITE_LIFE
+,	NO_RECHARGE
+,	INFINITE_STAMINA
+,	LETS_KILL
+,	ZERO_WEIGHT
+,	LETS_FLY
+,	LETS_RUN
+,	LETS_TICK
+,	LAST_ENTRY
 };
 
-void flying_codecave();
-void super_speed_codecave();
-void easy_kill_codecave();
-void move_clock_codecave();
 
 struct cheat_definition {
 	char		*cheat_prompt;
-	BYTE		original_code[0x20];
-	BYTE		cheat_code[0x20];
+	BYTE		original_code[0x40];
+	BYTE		cheat_code[0x40];
 	BYTE		*destination_address;
 	int		cheat_num_bytes;
+	int		aob_num_bytes;
 };
 
 struct cheat_definition *get_definition(int );

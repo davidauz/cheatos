@@ -11,18 +11,6 @@ int	show_error_return_false( TCHAR* msg);
 int	wait_for_process_and_inject();
 void	init_jump_table();
 
-void	reset_acceleration_value();
-void	reset_speed();
-void	reset_pain();
-void	reset_time_gap();
-
-void	increase_acceleration_value();
-void	increase_speed();
-void	increase_pain();
-void	increase_time_gap();
-
-void update_codecave_addresses();
-
 
 #define TARGET_EXE "GenerationZero_F.exe"
 // #define TARGET_EXE "Notepad.exe" // TESTS

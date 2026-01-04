@@ -3,6 +3,7 @@
 #include "definitions.h"
 #include "logic.h"
 #include "memscan.h"
+#include "codecaves.h"
 
 HINSTANCE g_dll_handle=NULL;
 LPVOID g_pSharedMem = NULL;
@@ -15,7 +16,8 @@ void init_jump_table(){
 	DWORD	oldProtect;
 	BYTE *jump_table=getBaseAddress()+0x450;
 	VirtualProtect( jump_table , 32, PAGE_EXECUTE_READWRITE, &oldProtect);
-	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4; // base+0x450. The '+4' is to skip the C function prolog
+// The '+4' below is to skip the C function prolog
+	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x450 (unused)
 	jump_table+=8;
 	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x458
 	jump_table+=8;
@@ -33,7 +35,7 @@ void init_jump_table(){
 
 DWORD WINAPI dll_thread(LPVOID param)
 {
-	int cheat_status[10]={0};
+	int cheat_status[20]={0};
 	file_log("%s : %d beginning housekeeping", __FILE__, __LINE__);
 	if(0!=query_module_parameters()){
 		return file_log("%s : %d Exiting", __FILE__, __LINE__);
@@ -53,9 +55,11 @@ DWORD WINAPI dll_thread(LPVOID param)
 		if(GetAsyncKeyState(VK_NUMPAD1 //0x31 	1 key
 		) ){
 			cheat_status[INFINITE_AMMO]=!cheat_status[INFINITE_AMMO];
-			cheat_status[NO_RECHARGE]=!cheat_status[NO_RECHARGE];
+			cheat_status[INFINITE_AMMO_2]=!cheat_status[INFINITE_AMMO_2];
+//			cheat_status[NO_RECHARGE]=!cheat_status[NO_RECHARGE];
 			perform_action(INFINITE_AMMO, cheat_status[INFINITE_AMMO]);
-			perform_action(NO_RECHARGE, cheat_status[NO_RECHARGE]);
+			perform_action(INFINITE_AMMO_2, cheat_status[INFINITE_AMMO_2]);
+//			perform_action(NO_RECHARGE, cheat_status[NO_RECHARGE]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD2 //0x32 	2 key
 		) ){
@@ -94,8 +98,7 @@ DWORD WINAPI dll_thread(LPVOID param)
 				perform_action(LETS_FLY, cheat_status[LETS_FLY]);
 			}
 		}
-		if(GetAsyncKeyState(VK_NUMPAD7
-		) ){
+		if(GetAsyncKeyState(VK_NUMPAD7) ){
 			if( GetAsyncKeyState(VK_MENU) )	//	ALT key
 				increase_speed();
 			else if( GetAsyncKeyState(VK_CONTROL) )

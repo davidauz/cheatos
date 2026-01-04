@@ -17,11 +17,11 @@ void ScanMemoryRange
 	if (!mem_range_start_addr || !def )
 		return;
 
-	int sequence_length = def->cheat_num_bytes;
+	int sequence_length = def->aob_num_bytes;
 	BYTE *base = (BYTE *)mem_range_start_addr
 	,	*sequence=def->original_code;
 	SIZE_T max = mem_range_size - sequence_length;
-	file_log("%s : %d definition at 0x%p", __FILE__, __LINE__,def);
+	file_log("%s : %d looking for '%s'", __FILE__, __LINE__, def->cheat_prompt);
 
 	for (SIZE_T i = 0; i <= max; ++i) {
 		if (base[i] == sequence[0]) {
@@ -43,7 +43,32 @@ void ScanCurrentProcessMemory() {
 	ScanMemoryRange
 	(	getBaseAddress()
 	,	getBaseSize()
-	,	get_definition(LETS_FLY)
+	,	get_definition(INFINITE_STAMINA)
+	);
+	ScanMemoryRange
+	(	getBaseAddress()
+	,	getBaseSize()
+	,	get_definition(LETS_RUN)
+	);
+	ScanMemoryRange
+	(	getBaseAddress()
+	,	getBaseSize()
+	,	get_definition(INFINITE_LIFE)
+	);
+	ScanMemoryRange
+	(	getBaseAddress()
+	,	getBaseSize()
+	,	get_definition(INFINITE_AMMO)
+	);
+	ScanMemoryRange
+	(	getBaseAddress()
+	,	getBaseSize()
+	,	get_definition(INFINITE_AMMO_2)
+	);
+	ScanMemoryRange
+	(	getBaseAddress()
+	,	getBaseSize()
+	,	get_definition(ZERO_WEIGHT)
 	);
 }
 

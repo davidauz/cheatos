@@ -10,8 +10,8 @@ all: cheatos.exe cheatos.dll
 cheatos.exe : $(cheatos_obj) $(headers) app.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(cheatos_obj) app.o -lwinmm
 
-cheatos.dll : dll_injection.o logic.o memscan.o definitions.o getbaseaddress.o $(headers)
-	$(CC) -shared -o cheatos.dll dll_injection.o logic.o memscan.o definitions.o getbaseaddress.o  -lwinmm
+cheatos.dll : dll_injection.o logic.o memscan.o definitions.o getbaseaddress.o codecaves.o $(headers)
+	$(CC) -shared -o cheatos.dll dll_injection.o logic.o memscan.o definitions.o getbaseaddress.o codecaves.o  -lwinmm
 
 # .c.o:
 %.o: %.c $(headers)
