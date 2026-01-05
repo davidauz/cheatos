@@ -13,7 +13,7 @@ void	increase_time_gap();
 
 void flying_codecave();
 void super_speed_codecave();
-void easy_kill_codecave();
+//void easy_kill_codecave();
 void move_clock_codecave();
 
 void update_codecave_addresses();

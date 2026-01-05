@@ -15,19 +15,13 @@ float	g_y_acceleration=1
 
 
 // GCC-style inline assembly syntax breakdown
-void easy_kill_codecave(){
-__asm__(
-	"movss  %0,%%xmm2;"	// %0 is replaced with the memory reference to g_PAIN
-	"mulss  0x20(%%rbx),%%xmm2;"
-	"mulss  %%xmm0,%%xmm2;"
-	"ret;"
-	:			// No output operands (empty after first colon)
-	: "m" (g_PAIN)		// Input operand: g_PAIN is in memory
-);
-//      |  |     └─── C variable/expression
-//      |  └───────── Constraint ("m" = 'memory operand')
-//      └──────────── Colon separating assembly template from inputs
-}
+// void easy_kill_codecave(){
+// __asm__(
+// 	"xorps  %xmm0,%xmm0;" // 0F57 C0
+// 	"movss  %xmm0,0x11c(%ebx); (9) " // 0x67, 0xF3, 0x0F, 0x11, 0x83, 0x1C, 0x01, 0x00, 0x00
+// 	"ret;"
+// );
+// }
 
 
 void increase_time_gap(){
@@ -47,6 +41,9 @@ __asm__(
 	"ret;"
 	:
 	: "m" (l_TICK)
+//      |  |     └─── C variable/expression
+//      |  └───────── Constraint ("m" = 'memory operand')
+//      └──────────── Colon separating assembly template from inputs
 );
 }
 
@@ -150,7 +147,7 @@ void update_codecave_addresses(){
 	,	*jump_table=base_address+0x450
 	,	*where_is_run_codecave=jump_table+0x08
 	,	*where_is_tick_codecave=jump_table+0x18
-	,	*where_is_zerow_codecave=jump_table
+	,	*where_is_one_shot_kill_cc=jump_table
 	;
 	update_codecave_address
 	(	LETS_TICK
@@ -159,6 +156,10 @@ void update_codecave_addresses(){
 	update_codecave_address
 	(	LETS_RUN
 	,	where_is_run_codecave
+	);
+	update_codecave_address
+	(	LETS_KILL
+	,	where_is_one_shot_kill_cc
 	);
 }
 

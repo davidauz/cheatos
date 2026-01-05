@@ -21,7 +21,7 @@ void init_jump_table(){
 	jump_table+=8;
 	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x458
 	jump_table+=8;
-	*(unsigned long long *)jump_table=(unsigned long long)easy_kill_codecave+4; // base+0x460
+	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x460 ( unused)
 	jump_table+=8;
 	*(unsigned long long *)jump_table=(unsigned long long)move_clock_codecave+4; // base+0x468
 	VirtualProtect( jump_table , 32, oldProtect, &oldProtect);

@@ -70,20 +70,17 @@ struct cheat_definition definitions[] =
 	}
 ,	[LETS_KILL]=
 	{	"Easy kill (numpad 4)"
-	,	{ 0xf3, 0x0f, 0x59, 0x53, 0x20 	//	mulss   xmm2,dword ptr [rbx+20h] (5 bytes)
-		, 0xf3, 0x0f, 0x59, 0xd0 }	//	mulss   xmm2,xmm0 (4 bytes, tot 9 bytes)
-	,	{ 0xFF, 0x15, 0xA6, 0x96, 0x9A, 0xFF  // call qword ptr [GenerationZero_F+0x460] (6 bytes) (0x450+0x10)
-		, 0x90, 0x90, 0x90 }		//	nop nop nop (3 bytes)
-// \xFF \x15 stands for CALL QWORD PTR [RIP + displacement] or "call through memory pointer".
-// What follows the two opcodes is a 32-bit little-endian displacement.
-// The target address is calculated as Next RIP + displacement
-// where 'Next RIP' is the address of the next instruction after the complete 6-byte call
-// So suppose that the instruction starts at: 0x7ff96b304d3d: \xff \x15 11 22 33 44
-// The instruction length is of : 6 bytes
-// The Next RIP is at 0x7ff96b304d3d + 6 = 0x7ff96b304d43
+	,	{ 0xF3, 0x0F, 0x10, 0x83, 0x1C, 0x01, 0x00, 0x00	//	movss  0x11c(%rbx),%xmm0
+	,	0x0F, 0x2F, 0xC7	//	comiss %xmm7,%xmm0
+	,	0x77, 0x56	//	ja GenerationZero_F.exe+60A673 (2)
+	,	0x0F, 0x28, 0xC7	//	comiss %xmm7,%xmm0
+	}
+	,	{ 0x0F, 0x57, 0xc0  // xorps xmm0,xmm0
+	,	0xF3, 0x0F, 0x11, 0x83, 0x1C, 0x01, 0x00, 0x00 //movss [rbx+0000011C],xmm0
+	,	0xEB, 0x56} // jmp GenerationZero_F.exe+60A673
 	,	NULL
-	,	9
-	,	9
+	,	13
+	,	16
 	}
 //  p /x 0XFFFFFFFF-(0x656DB4-0x450+5-0x10) =  0xff9a96a6
 //           |            |      |  |   |
