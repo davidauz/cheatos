@@ -17,7 +17,7 @@ void init_jump_table(){
 	BYTE *jump_table=getBaseAddress()+0x450;
 	VirtualProtect( jump_table , 32, PAGE_EXECUTE_READWRITE, &oldProtect);
 // The '+4' below is to skip the C function prolog
-	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x450 (unused)
+	*(unsigned long long *)jump_table=(unsigned long long)flying_codecave+4; // base+0x450
 	jump_table+=8;
 	*(unsigned long long *)jump_table=(unsigned long long)super_speed_codecave+4; // base+0x458
 	jump_table+=8;

@@ -14,16 +14,6 @@ float	g_y_acceleration=1
 ;
 
 
-// GCC-style inline assembly syntax breakdown
-// void easy_kill_codecave(){
-// __asm__(
-// 	"xorps  %xmm0,%xmm0;" // 0F57 C0
-// 	"movss  %xmm0,0x11c(%ebx); (9) " // 0x67, 0xF3, 0x0F, 0x11, 0x83, 0x1C, 0x01, 0x00, 0x00
-// 	"ret;"
-// );
-// }
-
-
 void increase_time_gap(){
 l_TICK+=0.01;
 	file_log( "%s : %d TICK now `%f`", __FILE__, __LINE__, l_TICK );
@@ -123,6 +113,7 @@ void update_codecave_address
 	BYTE *jump_code=get_definition(def_seq)->cheat_code // this is 0xFF 0x15
 	,	*game_original_code_address = get_definition(def_seq)->destination_address // this is the place where the jump happens
 	;
+	file_log("%s : %d updating codecave for '%s'", __FILE__, __LINE__, get_definition(def_seq)->cheat_prompt);
 	if (jump_code[0] != 0xFF || jump_code[1] != 0x15) {
 		file_log("%s : %d not a jump", __FILE__, __LINE__);
 		return;
@@ -147,7 +138,8 @@ void update_codecave_addresses(){
 	,	*jump_table=base_address+0x450
 	,	*where_is_run_codecave=jump_table+0x08
 	,	*where_is_tick_codecave=jump_table+0x18
-	,	*where_is_one_shot_kill_cc=jump_table
+//	,	*where_is_one_shot_kill_cc=jump_table
+	,	*where_is_fly_codecave=jump_table+0x00
 	;
 	update_codecave_address
 	(	LETS_TICK
@@ -158,8 +150,8 @@ void update_codecave_addresses(){
 	,	where_is_run_codecave
 	);
 	update_codecave_address
-	(	LETS_KILL
-	,	where_is_one_shot_kill_cc
+	(	LETS_FLY
+	,	where_is_fly_codecave
 	);
 }
 

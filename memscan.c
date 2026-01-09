@@ -75,6 +75,11 @@ void ScanCurrentProcessMemory() {
 	,	getBaseSize()
 	,	get_definition(LETS_KILL)
 	);
+	ScanMemoryRange
+	(	getBaseAddress()
+	,	getBaseSize()
+	,	get_definition(LETS_FLY)
+	);
 }
 
 

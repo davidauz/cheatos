@@ -82,13 +82,6 @@ struct cheat_definition definitions[] =
 	,	13
 	,	16
 	}
-//  p /x 0XFFFFFFFF-(0x656DB4-0x450+5-0x10) =  0xff9a96a6
-//           |            |      |  |   |
-//           |            |      |  |   +- offset in jump table
-//           |            |      |  +- next instruction is 5 bytes down
-//           |            |      +- start of jump table
-//           |            +- target relative offset
-//           +- for negative value
 ,	[ZERO_WEIGHT]=
 	{	"Zero Weight (numpad 5)"
 	,	{0x48, 0x8D, 0x88, 0x38, 0x03, 0x00, 0x00	//	lea rcx,[rax+00000338] (7)
