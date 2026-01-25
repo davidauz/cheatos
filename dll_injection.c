@@ -28,7 +28,7 @@ void init_jump_table(){
 //The jump table now sits at base address+0x450. Its contents are:
 // base+0x450 pointer to asm function flying_codecave
 // base+0x458 super_speed_codecave
-// base+0x460 easy_kill_codecave
+// base+0x460 this was easy_kill_codecave, no longer needed
 // base+0x468 move_clock_codecave
 }
 
@@ -56,10 +56,8 @@ DWORD WINAPI dll_thread(LPVOID param)
 		) ){
 			cheat_status[INFINITE_AMMO]=!cheat_status[INFINITE_AMMO];
 			cheat_status[INFINITE_AMMO_2]=!cheat_status[INFINITE_AMMO_2];
-//			cheat_status[NO_RECHARGE]=!cheat_status[NO_RECHARGE];
 			perform_action(INFINITE_AMMO, cheat_status[INFINITE_AMMO]);
 			perform_action(INFINITE_AMMO_2, cheat_status[INFINITE_AMMO_2]);
-//			perform_action(NO_RECHARGE, cheat_status[NO_RECHARGE]);
 		}
 		if(GetAsyncKeyState(VK_NUMPAD2 //0x32 	2 key
 		) ){

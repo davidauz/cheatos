@@ -35,51 +35,16 @@ void ScanMemoryRange
 }
 
 void ScanCurrentProcessMemory() {
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(LETS_TICK)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(INFINITE_STAMINA)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(LETS_RUN)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(INFINITE_LIFE)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(INFINITE_AMMO)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(INFINITE_AMMO_2)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(ZERO_WEIGHT)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(LETS_KILL)
-	);
-	ScanMemoryRange
-	(	getBaseAddress()
-	,	getBaseSize()
-	,	get_definition(LETS_FLY)
-	);
+	int index=INFINITE_AMMO; // 0
+	while(true) {
+		if(0==get_definition(index)->aob_num_bytes)
+			return;
+		ScanMemoryRange
+		(	getBaseAddress()
+		,	getBaseSize()
+		,	get_definition(index)
+		);
+		index++;
+	}
 }
-
 
