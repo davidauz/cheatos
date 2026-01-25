@@ -49,14 +49,14 @@ struct cheat_definition definitions[] =
 	,	2
 	,	35
 	}	
-,	[NO_RECHARGE]=
-	{	"" // goes together with infinite ammo
-	,	{ 0x89, 0x91, 0x7c, 0x02, 0x00, 0x00 }
-	,	{ 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
-	,	NULL
-	,	6
-	,	6
-	}
+//,	[NO_RECHARGE]=
+//	{	"" // goes together with infinite ammo
+//	,	{ 0x89, 0x91, 0x7c, 0x02, 0x00, 0x00 }
+//	,	{ 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 }
+//	,	NULL
+//	,	6
+//	,	6
+//	}
 ,	[INFINITE_STAMINA]=
 	{	"Infinite stamina (numpad 3)"
 	,	{0x74, 0x45
@@ -100,12 +100,6 @@ struct cheat_definition definitions[] =
 		, 0x0F, 0x29, 0x77, 0x50 } // movaps  xmmword ptr [rdi+50h],xmm6 (movaps %xmm6,0x50(%rdi), 4 bytes)
 	,	{ 0xFF, 0x15, 0x55, 0x0B, 0x84, 0xFE  // call    qword ptr [GenerationZero_F+0x450] ( call   *-0xFE840b55(%rip), 6 bytes)
 		, 0x90, 0x90 } // nop nop (and even two bytes to spare)
-// Here RIP is GenerationZero_F+0x17BF8F5
-// Jump table is at GenerationZero_F+0x450; it is filled by init_jump_table() in dll_injection.c
-// Jump table address relative to RIP is 0x17BF8F5-0x450+5 = 0x17BF4AA (+5 because RIP points to next instruction)
-// But it has to be negative: 0XFFFFFFFF-0x17BF4AA = 0xFE840B55
-// So up here is \xFF\x15 (call qword ptr) \x55\x0B\x84\xFE (address location)
-// in short: p /x 0XFFFFFFFF-(0x17BF8F5-0x450+5) = 0xFE840B55
 	,	NULL
 	,	8 // total 8 bytes
 	,	8 // total 8 bytes
@@ -137,7 +131,7 @@ struct cheat_definition definitions[] =
 	,	{ 0x00, 0x00, 0x00 }
 	,	{ 0x00, 0x00, 0x00 }
 	,	NULL
-	,	3
+	,	0
 	}
 };
 

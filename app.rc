@@ -1,4 +1,6 @@
 #include <windows.h>
 
+// This is for running the exe in elevated mode
+
 1 RT_MANIFEST "app.manifest"
 

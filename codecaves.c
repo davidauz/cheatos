@@ -138,7 +138,6 @@ void update_codecave_addresses(){
 	,	*jump_table=base_address+0x450
 	,	*where_is_run_codecave=jump_table+0x08
 	,	*where_is_tick_codecave=jump_table+0x18
-//	,	*where_is_one_shot_kill_cc=jump_table
 	,	*where_is_fly_codecave=jump_table+0x00
 	;
 	update_codecave_address
