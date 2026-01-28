@@ -18,6 +18,7 @@ enum cheats
 ,	LETS_FLY
 ,	LETS_RUN
 ,	LETS_TICK
+,	STORAGE_BOX
 ,	LAST_ENTRY
 };
 
