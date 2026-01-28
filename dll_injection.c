@@ -117,6 +117,11 @@ DWORD WINAPI dll_thread(LPVOID param)
 				perform_action(LETS_TICK, cheat_status[LETS_TICK]);
 			}
 		}
+		if(GetAsyncKeyState(VK_NUMPAD9
+		) ){
+			cheat_status[STORAGE_BOX]=!cheat_status[STORAGE_BOX];
+			perform_action(STORAGE_BOX, cheat_status[STORAGE_BOX]);
+		}
 		Sleep(100);
 	}
 	return 0;

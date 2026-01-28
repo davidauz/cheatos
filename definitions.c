@@ -126,6 +126,18 @@ struct cheat_definition definitions[] =
 	,	15					// tot 15 bytes
 	,	15					// tot 15 bytes
 	}
+,	[STORAGE_BOX]=
+	{	"Infinite storage box (Numpad 9)"
+	,	{ 0xF3, 0x0F, 0x58, 0xF0 // addss xmm6,xmm0 (4)
+		, 0x48, 0x3B, 0xFD // cmp rdi,rbp (3)
+		, 0x0F, 0x85, 0x3A, 0xFF, 0xFF, 0xFF // jne GenerationZero_F.exe+7229E0 (6)
+		, 0x4C, 0x8B, 0x7C, 0x24, 0x30 // mov r15,[rsp+30] (5)
+		, 0x0F, 0x28, 0xC6 } // movaps xmm0,xmm6 (3)
+	,	{ 0x90, 0x90, 0x90, 0x90 } // nop nop nop nop (4 bytes)
+	,	NULL
+	,	4					// cheat is 4 bytes long
+	,	21					// AOB is 13 bytes long
+	}
 ,	[LAST_ENTRY]=
 	{	"Last entry"
 	,	{ 0x00, 0x00, 0x00 }
