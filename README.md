@@ -1,7 +1,7 @@
 # cheatos
 Simple game cheater for the awesome game Generation Zero.
 
-Written in pure C, uses AOBs so at least part of it should work across different versions.
+Written in pure C, uses AOBs so at least some of the cheats should work across different versions.
 
 There is no interface; it injects into the running process and then waits for numpad keystrokes.
 
