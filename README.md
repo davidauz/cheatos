@@ -16,20 +16,28 @@ Precompiled binaries available in the release section.
 
 # Runnnig
 
--Numpad 0: exit and unload cheat thread
--Numpad 1: Infinite ammo
--Numpad 2: Infinite life
--Numpad 3: Infinite stamina
--Numpad 4: Easy kill
--Numpad 5: Zero weight
--Numpad 6: Fly like a superhero
--Numpad 7: Run FAST
- - Alt+ Numpad 7: increase speed
- - Ctrl+ Numpad 7: reset speed
--Numpad 8: move clock (I don't like nights)
- -Alt+Numpad 8: increase time speed
- -Ctrl+Numpad 8: reset time speed
+- Numpad 0: exit and unload cheat thread
 
-#Numpad 9: infinite capacity storage box
+- Numpad 1: Infinite ammo
+
+- Numpad 2: Infinite life
+
+- Numpad 3: Infinite stamina
+
+- Numpad 4: Easy kill
+
+- Numpad 5: Zero weight
+
+- Numpad 6: Fly like a superhero
+
+- Numpad 7: Run FAST
+    - Alt+ Numpad 7: increase speed
+    - Ctrl+ Numpad 7: reset speed
+
+- Numpad 8: move clock (I don't like nights)
+    - Alt+Numpad 8: increase time speed
+    - Ctrl+Numpad 8: reset time speed
+
+- Numpad 9: infinite capacity storage box
 
 
